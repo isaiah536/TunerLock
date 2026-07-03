@@ -3,7 +3,11 @@ cmake_minimum_required(VERSION 3.16)
 project(tunerlock_tracking_engine LANGUAGES CXX)
 
 add_library(tunerlock_tracking_engine STATIC
+  src/common/types.cpp
   src/api/tracking_engine_api.cpp
+  src/audio/audio_buffer.cpp
+  src/audio/window.cpp
+  src/fft/fft.cpp
   src/pitch/yin.cpp
   src/pitch/mpm.cpp
   src/tracking/attack_detector.cpp

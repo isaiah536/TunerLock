@@ -1,13 +1,8 @@
 #pragma once
 
-namespace tunerlock {
+#include "types.h"
 
-struct TrackingResult {
-  double frequency_hz = 0.0;
-  double cents = 0.0;
-  double confidence = 0.0;
-  bool locked = false;
-};
+namespace tunerlock {
 
 class TrackingEngine {
  public:
