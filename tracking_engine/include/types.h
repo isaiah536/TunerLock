@@ -22,6 +22,14 @@ struct AudioFrame {
 struct AudioBuffer {
   std::vector<float> samples;
   int sample_rate = 0;
+
+  bool empty() const {
+    return samples.empty();
+  }
+
+  std::size_t sample_count() const {
+    return samples.size();
+  }
 };
 
 struct PitchResult {

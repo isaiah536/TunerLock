@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
+import '../shared/widgets/iphone_viewport.dart';
 import 'router.dart';
 
 class AuralockApp extends StatelessWidget {
@@ -12,6 +13,9 @@ class AuralockApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Auralock',
       theme: AppTheme.light,
+      builder: (context, child) {
+        return IphoneViewport(child: child ?? const SizedBox.shrink());
+      },
       home: TunerAppRouter.home,
     );
   }

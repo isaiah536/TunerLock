@@ -39,7 +39,6 @@ tracking_engine/
 
 ```text
 Flutter UI
-(Liquid Glass 화면)
         ↓
 Dart Service
 tracking_engine_service.dart

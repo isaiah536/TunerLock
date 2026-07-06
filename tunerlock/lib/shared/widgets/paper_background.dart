@@ -38,18 +38,33 @@ class PaperPainter extends CustomPainter {
       ..color = const Color(0x705B554B)
       ..strokeWidth = 2.6;
     final staffCenterY = size.height * 0.48;
+    const staffSpacing = 40.5;
     for (var i = -2; i <= 2; i++) {
-      final y = staffCenterY + i * 27;
+      final y = staffCenterY + i * staffSpacing;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), staffPaint);
     }
+
+    final staffTop = staffCenterY - staffSpacing * 2;
+    final staffBottom = staffCenterY + staffSpacing * 2;
+    final markerTop = staffCenterY - staffSpacing * 2.75;
+    final markerBottom = staffCenterY + staffSpacing * 2.75;
+    final startLineX = size.width * 0.02;
+    final startLinePaint = Paint()
+      ..color = const Color(0x805B554B)
+      ..strokeWidth = 9;
+    canvas.drawLine(
+      Offset(startLineX, staffTop),
+      Offset(startLineX, staffBottom),
+      startLinePaint,
+    );
 
     final markerX = size.width * pitchMarkerPosition;
     final markerPaint = Paint()
       ..color = const Color(0x99544F46)
       ..strokeWidth = 1.6;
     canvas.drawLine(
-      Offset(markerX, staffCenterY - 74),
-      Offset(markerX, staffCenterY + 74),
+      Offset(markerX, markerTop),
+      Offset(markerX, markerBottom),
       markerPaint,
     );
 

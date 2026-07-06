@@ -1,6 +1,6 @@
+#include "window.h"
+
 #include <cmath>
-#include <cstddef>
-#include <vector>
 
 namespace tunerlock::audio {
 
@@ -20,8 +20,11 @@ std::vector<float> HannWindow(std::size_t size) {
   return window;
 }
 
-void ApplyWindowInPlace(std::vector<float>& samples, const std::vector<float>& window) {
-  const std::size_t count = samples.size() < window.size() ? samples.size() : window.size();
+void ApplyWindowInPlace(
+    std::vector<float>& samples,
+    const std::vector<float>& window) {
+  const std::size_t count =
+      samples.size() < window.size() ? samples.size() : window.size();
   for (std::size_t i = 0; i < count; ++i) {
     samples[i] *= window[i];
   }
