@@ -8,6 +8,7 @@ add_library(tunerlock_tracking_engine STATIC
   src/common/types.cpp
   src/api/tracking_engine_api.cpp
   src/audio/audio_buffer.cpp
+  src/audio/wav_reader.cpp
   src/audio/window.cpp
   src/fft/fft.cpp
   src/pitch/yin.cpp
@@ -60,3 +61,24 @@ target_link_libraries(yin_test PRIVATE tunerlock_tracking_engine)
 target_compile_features(yin_test PRIVATE cxx_std_17)
 
 add_test(NAME yin_test COMMAND yin_test)
+
+add_executable(debug_trace_test
+  tests/debug_trace_test.cpp
+)
+
+target_link_libraries(debug_trace_test PRIVATE tunerlock_tracking_engine)
+target_compile_features(debug_trace_test PRIVATE cxx_std_17)
+
+add_test(NAME debug_trace_test COMMAND debug_trace_test)
+
+add_executable(wav_reader_test
+  tests/wav_reader_test.cpp
+)
+
+target_link_libraries(wav_reader_test PRIVATE tunerlock_tracking_engine)
+target_compile_features(wav_reader_test PRIVATE cxx_std_17)
+
+add_test(NAME wav_reader_test COMMAND wav_reader_test)
+set_tests_properties(wav_reader_test PROPERTIES
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/.."
+)

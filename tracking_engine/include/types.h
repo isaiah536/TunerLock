@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace tunerlock {
@@ -45,6 +47,24 @@ struct TrackingResult {
   double cents = 0.0;
   double confidence = 0.0;
   bool locked = false;
+};
+
+struct DebugMetric {
+  std::string stage;
+  std::string name;
+  double value = 0.0;
+};
+
+struct DebugTrace {
+  std::vector<DebugMetric> metrics;
+
+  void Add(std::string stage, std::string name, double value) {
+    metrics.push_back(DebugMetric{std::move(stage), std::move(name), value});
+  }
+
+  void Clear() {
+    metrics.clear();
+  }
 };
 
 }  // namespace tunerlock
