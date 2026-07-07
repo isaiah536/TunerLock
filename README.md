@@ -63,13 +63,13 @@ Flutter UI 업데이트
 ## 데이터 흐름
 
 ```text
-마이크 입력
+마이크 입력 o
 ↓
-PCM Audio Buffer
+PCM Audio Buffer o
 ↓
-Windowing
+Windowing o
 ↓
-FFT
+FFT o
 ↓
 YIN으로 기본 피치 검출
 ↓
