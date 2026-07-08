@@ -53,6 +53,24 @@ target_compile_features(fft_test PRIVATE cxx_std_17)
 
 add_test(NAME fft_test COMMAND fft_test)
 
+add_executable(harmonic_test
+  tests/harmonic_test.cpp
+)
+
+target_link_libraries(harmonic_test PRIVATE tunerlock_tracking_engine)
+target_compile_features(harmonic_test PRIVATE cxx_std_17)
+
+add_test(NAME harmonic_test COMMAND harmonic_test)
+
+add_executable(feature_extractor_test
+  tests/feature_extractor_test.cpp
+)
+
+target_link_libraries(feature_extractor_test PRIVATE tunerlock_tracking_engine)
+target_compile_features(feature_extractor_test PRIVATE cxx_std_17)
+
+add_test(NAME feature_extractor_test COMMAND feature_extractor_test)
+
 add_executable(yin_test
   tests/yin_test.cpp
 )
@@ -82,3 +100,10 @@ add_test(NAME wav_reader_test COMMAND wav_reader_test)
 set_tests_properties(wav_reader_test PROPERTIES
   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/.."
 )
+
+add_executable(fft_vector_plot
+  tools/fft_vector_plot.cpp
+)
+
+target_link_libraries(fft_vector_plot PRIVATE tunerlock_tracking_engine)
+target_compile_features(fft_vector_plot PRIVATE cxx_std_17)

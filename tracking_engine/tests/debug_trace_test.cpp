@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -62,6 +63,11 @@ int main() {
 
   assert(result.locked);
   assert(!trace.metrics.empty());
+  for (const auto& metric : trace.metrics) {
+    std::cout << metric.stage << "." << metric.name << "="
+              << metric.value << '\n';
+  }
+
   assert(HasMetric(trace, "input", "sample_count"));
   assert(HasMetric(trace, "audio_buffer", "rms_after"));
   assert(HasMetric(trace, "windowing", "window_size"));

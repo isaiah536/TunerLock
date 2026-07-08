@@ -71,7 +71,7 @@ Windowing o
 ↓
 FFT o
 ↓
-YIN으로 기본 피치 검출
+YIN으로 기본 피치 검출o
 ↓
 Feature 추출
 ↓

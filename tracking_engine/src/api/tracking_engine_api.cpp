@@ -1,5 +1,7 @@
 #include "audio_buffer.h"
+#include "feature_extractor.h"
 #include "fft.h"
+#include "harmonic.h"
 #include "tracking_engine.h"
 #include "window.h"
 #include "yin.h"
@@ -85,6 +87,56 @@ TrackingResult TrackingEngine::ProcessFrameWithDebug(
         static_cast<int>(buffer.samples.size()),
         buffer.sample_rate);
     trace->Add("yin", "pitch_hz", yin_pitch);
+
+    if (yin_pitch > 0.0) {
+      const feature::HarmonicScore harmonic_score =
+          feature::ComputeHarmonicSumSpectrum(
+              magnitudes,
+              buffer.sample_rate,
+              window_input.size(),
+              yin_pitch);
+      trace->Add("harmonic", "weighted_sum", harmonic_score.weighted_sum);
+      trace->Add(
+          "harmonic",
+          "normalized_score",
+          harmonic_score.normalized_score);
+      trace->Add(
+          "harmonic",
+          "energy_ratio",
+          harmonic_score.harmonic_energy_ratio);
+      trace->Add("harmonic", "count", harmonic_score.harmonic_count);
+
+      const feature::FeatureVector features = feature::ExtractFeatures(
+          feature::FeatureInput{
+              buffer.samples.data(),
+              buffer.samples.size(),
+              buffer.sample_rate,
+              &magnitudes,
+              window_input.size(),
+              yin_pitch,
+              harmonic_score,
+          });
+      trace->Add("feature", "rms", features.rms);
+      trace->Add("feature", "peak_amplitude", features.peak_amplitude);
+      trace->Add("feature", "yin_pitch_hz", features.yin_pitch_hz);
+      trace->Add("feature", "yin_detected", features.yin_detected ? 1.0 : 0.0);
+      trace->Add(
+          "feature",
+          "fft_peak_frequency_hz",
+          features.fft_peak_frequency_hz);
+      trace->Add(
+          "feature",
+          "spectral_centroid_hz",
+          features.spectral_centroid_hz);
+      trace->Add(
+          "feature",
+          "harmonic_normalized_score",
+          features.harmonic_normalized_score);
+      trace->Add(
+          "feature",
+          "harmonic_energy_ratio",
+          features.harmonic_energy_ratio);
+    }
   }
 
   return TrackingResult{
