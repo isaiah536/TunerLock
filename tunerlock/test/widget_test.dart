@@ -12,6 +12,9 @@ void main() {
     expect(find.text('Standard 440.0 Hz'), findsOneWidget);
     expect(find.text('LOCKED'), findsOneWidget);
     expect(find.text('440.1'), findsOneWidget);
-    expect(find.text('Tuner'), findsOneWidget);
+    expect(find.text('Strings'), findsOneWidget);
+    expect(find.text('Wind'), findsOneWidget);
+    expect(find.text('Brass'), findsOneWidget);
+    expect(find.text('Metronome'), findsOneWidget);
   });
 }

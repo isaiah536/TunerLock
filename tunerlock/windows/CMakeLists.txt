@@ -49,6 +49,12 @@ endfunction()
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
 
+add_subdirectory(
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../tracking_engine"
+  "${CMAKE_CURRENT_BINARY_DIR}/tracking_engine"
+  EXCLUDE_FROM_ALL
+)
+
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
 

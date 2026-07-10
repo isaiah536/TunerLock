@@ -14,10 +14,14 @@ class BottomTabs extends StatelessWidget {
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          BottomTab(icon: Icons.graphic_eq_rounded, label: 'Tuner', active: true),
-          BottomTab(icon: Icons.notifications_none_rounded, label: 'Tone'),
-          BottomTab(icon: Icons.album_outlined, label: 'Record'),
-          BottomTab(icon: Icons.history_rounded, label: 'History'),
+          BottomTab(
+            icon: Icons.music_note_rounded,
+            label: 'Strings',
+            active: true,
+          ),
+          BottomTab(icon: Icons.air_rounded, label: 'Wind'),
+          BottomTab(icon: Icons.campaign_outlined, label: 'Brass'),
+          BottomTab(icon: Icons.timer_outlined, label: 'Metronome'),
         ],
       ),
     );
@@ -40,7 +44,7 @@ class BottomTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = active ? const Color(0xFF24231F) : const Color(0xFF6E6A60);
     return SizedBox(
-      width: 72,
+      width: 82,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -49,7 +53,7 @@ class BottomTab extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 13,
               fontWeight: active ? FontWeight.w700 : FontWeight.w500,
               color: color,
             ),
