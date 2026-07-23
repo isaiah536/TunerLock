@@ -5,7 +5,7 @@
 #if defined(_WIN32)
 #define TUNERLOCK_API extern "C" __declspec(dllexport)
 #else
-#define TUNERLOCK_API extern "C" __attribute__((visibility("default")))
+#define TUNERLOCK_API extern "C" __attribute__((visibility("default"))) __attribute__((used))
 #endif
 
 TUNERLOCK_API void* tunerlock_engine_create(int instrument_profile);

@@ -10,18 +10,35 @@ class MicrophoneInputFactory {
 
   static MicrophoneInputService create({
     bool useMockInput = false,
-    bool useWavInput = true,
+    bool? useWavInput,
     String? wavPath,
   }) {
     if (useMockInput) {
       return MockMicrophoneInputService();
     }
 
-    if (useWavInput) {
+    final shouldUseWavInput =
+        useWavInput ?? !(Platform.isIOS || Platform.isAndroid);
+    if (shouldUseWavInput) {
       final resolvedPath = _resolveWavPath(wavPath);
       if (resolvedPath != null) {
         return WavFileInputService(filePath: resolvedPath);
       }
+      if (useWavInput == true) {
+        return MockMicrophoneInputService();
+      }
+    }
+
+    if (Platform.isIOS || Platform.isAndroid) {
+      return NativeMicrophoneInputService();
+    }
+
+    final resolvedPath = _resolveWavPath(wavPath);
+    if (resolvedPath != null) {
+      return WavFileInputService(filePath: resolvedPath);
+    }
+
+    if (useWavInput != false) {
       return MockMicrophoneInputService();
     }
 
