@@ -71,6 +71,42 @@ target_compile_features(feature_extractor_test PRIVATE cxx_std_17)
 
 add_test(NAME feature_extractor_test COMMAND feature_extractor_test)
 
+add_executable(attack_detector_test
+  tests/attack_detector_test.cpp
+)
+
+target_link_libraries(attack_detector_test PRIVATE tunerlock_tracking_engine)
+target_compile_features(attack_detector_test PRIVATE cxx_std_17)
+
+add_test(NAME attack_detector_test COMMAND attack_detector_test)
+
+add_executable(target_tracking_test
+  tests/target_tracking_test.cpp
+)
+
+target_link_libraries(target_tracking_test PRIVATE tunerlock_tracking_engine)
+target_compile_features(target_tracking_test PRIVATE cxx_std_17)
+
+add_test(NAME target_tracking_test COMMAND target_tracking_test)
+
+add_executable(confidence_test
+  tests/confidence_test.cpp
+)
+
+target_link_libraries(confidence_test PRIVATE tunerlock_tracking_engine)
+target_compile_features(confidence_test PRIVATE cxx_std_17)
+
+add_test(NAME confidence_test COMMAND confidence_test)
+
+add_executable(kalman_test
+  tests/kalman_test.cpp
+)
+
+target_link_libraries(kalman_test PRIVATE tunerlock_tracking_engine)
+target_compile_features(kalman_test PRIVATE cxx_std_17)
+
+add_test(NAME kalman_test COMMAND kalman_test)
+
 add_executable(yin_test
   tests/yin_test.cpp
 )
@@ -107,3 +143,10 @@ add_executable(fft_vector_plot
 
 target_link_libraries(fft_vector_plot PRIVATE tunerlock_tracking_engine)
 target_compile_features(fft_vector_plot PRIVATE cxx_std_17)
+
+add_executable(engine_wav_analyzer
+  tools/engine_wav_analyzer.cpp
+)
+
+target_link_libraries(engine_wav_analyzer PRIVATE tunerlock_tracking_engine)
+target_compile_features(engine_wav_analyzer PRIVATE cxx_std_17)

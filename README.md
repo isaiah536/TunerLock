@@ -73,17 +73,17 @@ FFT o
 ↓
 YIN으로 기본 피치 검출o
 ↓
-Feature 추출
+Feature 추출 o
 ↓
-Attack 발생 여부 확인
+Attack 발생 여부 확인ㅇ
 ↓
-Tracking Lock 생성 또는 유지
+Tracking Lock 생성 또는 유지ㅇ
 ↓
-Confidence 계산
+Confidence 계산ㅇ
 ↓
-Kalman Filter로 피치 안정화
+Kalman Filter로 피치 안정화ㅇ
 ↓
-PitchResult 반환
+PitchResult 반환ㅇ
 ↓
 UI에서 사인파 위치, Hz, cents, 상태 표시
 ```
@@ -151,3 +151,64 @@ TunerLock:
 ```text
 Audio → Pitch + Feature → Attack → Lock → Confidence → Kalman → UI
 ```
+
+## feature
+
+rms 에너지의 크기
+
+peak_amplitude 진폭의 크기
+
+yin_pitch_hz 소리의 기음
+
+yin_detected 신뢰도
+
+fft_peak_frequency_hz 에너지가 가장 강한 주파수
+
+fft_peak_magnitude 에너지가 강한 주파수의 에너지 크기
+
+spectral_centroid_hz 스펙트럼의 중심 - 소리의 밝기
+
+harmonic_weighted_sum 배음의 크기 합
+
+harmonic_normalized_score 배음 정규화
+
+harmonic_energy_ratio 배음의 비율
+
+harmonic_count 배음의 개수
+
+## attack
+
+Frame N
+│
+├─ Peak/RMS 급상승?
+├─ Spectral Centroid 상승?
+└─ Harmonic Ratio 불안정 또는 낮음?
+          │
+          ├─ 아니오 → 기존 상태 유지
+          │
+          └─ 예 → ATTACK_CANDIDATE 생성
+                    │
+                    ▼
+          Frame N+1 ~ N+4 확인
+                    │
+                    ├─ YIN 피치가 검출되는가?
+                    ├─ 피치가 프레임 간 안정적인가?
+                    ├─ Harmonic Ratio가 상승하는가?
+                    └─ RMS가 유효 수준을 유지하는가?
+                              │
+                 ┌────────────┴────────────┐
+                 ▼                         ▼
+             조건 충족                  조건 실패
+                 │                         │
+                 ▼                         ▼
+          ATTACK_CONFIRMED           후보 폐기(NOISE)
+                 │
+                 ▼
+          Target 후보 생성
+                 │
+                 ├─ 기존 Lock 피치와 가까움
+                 │      → 기존 Tracking Lock 유지/갱신
+                 │
+                 └─ 기존 Lock 피치와 멂
+                        → 새 타깃 점수 평가
+                        → 충분히 강할 때만 Lock 전환

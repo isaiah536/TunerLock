@@ -9,6 +9,8 @@ typedef _DestroyNative = Void Function(Pointer<Void>);
 typedef _DestroyDart = void Function(Pointer<Void>);
 typedef _SetReferenceNative = Void Function(Pointer<Void>, Double);
 typedef _SetReferenceDart = void Function(Pointer<Void>, double);
+typedef _SetModeNative = Void Function(Pointer<Void>, Int32);
+typedef _SetModeDart = void Function(Pointer<Void>, int);
 typedef _AllocateNative = Pointer<Float> Function(Int32);
 typedef _AllocateDart = Pointer<Float> Function(int);
 typedef _FreeNative = Void Function(Pointer<Float>);
@@ -40,6 +42,9 @@ final class _NativeTrackingEngineBridge implements TrackingEngineBridge {
             .lookupFunction<_SetReferenceNative, _SetReferenceDart>(
               'tunerlock_engine_set_reference_pitch',
             ),
+        _setMode = library.lookupFunction<_SetModeNative, _SetModeDart>(
+          'tunerlock_engine_set_tracking_mode',
+        ),
         _allocate = library.lookupFunction<_AllocateNative, _AllocateDart>(
           'tunerlock_samples_allocate',
         ),
@@ -81,6 +86,7 @@ final class _NativeTrackingEngineBridge implements TrackingEngineBridge {
   final Pointer<Void> _handle;
   final _DestroyDart _destroy;
   final _SetReferenceDart _setReference;
+  final _SetModeDart _setMode;
   final _AllocateDart _allocate;
   final _FreeDart _free;
   final _ProcessDart _process;
@@ -131,6 +137,13 @@ final class _NativeTrackingEngineBridge implements TrackingEngineBridge {
   void setReferencePitch(double frequencyHz) {
     if (!_disposed && frequencyHz > 0) {
       _setReference(_handle, frequencyHz);
+    }
+  }
+
+  @override
+  void setTrackingMode(TrackingMode mode) {
+    if (!_disposed) {
+      _setMode(_handle, mode.index);
     }
   }
 

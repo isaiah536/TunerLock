@@ -55,13 +55,21 @@ int main() {
 
   tunerlock::TrackingEngine engine;
   tunerlock::DebugTrace trace;
-  const tunerlock::TrackingResult result = engine.ProcessFrameWithDebug(
-      samples.data(),
-      static_cast<int>(samples.size()),
-      kSampleRate,
-      &trace);
+  tunerlock::TrackingResult result;
+  for (int frame = 0; frame < 5; ++frame) {
+    result = engine.ProcessFrameWithDebug(
+        samples.data(),
+        static_cast<int>(samples.size()),
+        kSampleRate,
+        &trace);
+  }
 
   assert(result.locked);
+  assert(std::fabs(result.frequency_hz - 440.0) < 2.0);
+  assert(result.midi_note == 69);
+  assert(std::fabs(result.target_frequency_hz - 440.0) < 0.01);
+  assert(std::fabs(result.cents) < 5.0);
+  assert(result.confidence > 0.0);
   assert(!trace.metrics.empty());
   for (const auto& metric : trace.metrics) {
     std::cout << metric.stage << "." << metric.name << "="
@@ -73,9 +81,19 @@ int main() {
   assert(HasMetric(trace, "windowing", "window_size"));
   assert(HasMetric(trace, "fft", "peak_frequency_hz"));
   assert(HasMetric(trace, "yin", "pitch_hz"));
+  assert(HasMetric(trace, "tracking", "locked_target_energy_ratio"));
+  assert(HasMetric(trace, "tracking", "locked"));
+  assert(HasMetric(trace, "output", "filtered_frequency_hz"));
+  assert(HasMetric(trace, "output", "cents"));
+  assert(MetricValue(trace, "tracking", "locked_target_energy_ratio") > 0.5);
 
   const double yin_pitch = MetricValue(trace, "yin", "pitch_hz");
   assert(std::fabs(yin_pitch - 440.0) < 2.0);
+
+  engine.SetReferencePitchHz(442.0);
+  assert(engine.reference_pitch_hz() == 442.0);
+  engine.SetReferencePitchHz(-1.0);
+  assert(engine.reference_pitch_hz() == 442.0);
 
   return 0;
 }

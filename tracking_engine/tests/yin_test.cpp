@@ -38,6 +38,16 @@ int main() {
       kSampleRate);
   assert(Near(a4_pitch, 440.0, 2.0));
 
+  const tunerlock::pitch::YinResult a4_result =
+      tunerlock::pitch::AnalyzePitchYin(
+          a4.data(),
+          static_cast<int>(a4.size()),
+          kSampleRate);
+  assert(a4_result.detected);
+  assert(Near(a4_result.frequency_hz, 440.0, 2.0));
+  assert(a4_result.periodicity > 0.9);
+  assert(a4_result.cmndf_value < 0.1);
+
   const std::vector<float> a3 = SineWave(220.0, kSampleRate, kSampleCount);
   const double a3_pitch = tunerlock::pitch::EstimatePitchYin(
       a3.data(),

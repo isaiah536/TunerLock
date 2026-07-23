@@ -1,4 +1,5 @@
 #include "audio_buffer.h"
+#include "feature_extractor.h"
 #include "fft.h"
 #include "harmonic.h"
 #include "wav_reader.h"
@@ -14,6 +15,82 @@
 #include <vector>
 
 namespace {
+
+struct FrameAnalysis {
+  std::size_t frame_index = 0;
+  std::size_t start_sample = 0;
+  int sample_rate = 0;
+  std::size_t fft_size = 0;
+  double start_time_seconds = 0.0;
+  std::vector<double> magnitudes;
+  double yin_pitch_hz = 0.0;
+  tunerlock::feature::HarmonicScore harmonic_score;
+  tunerlock::feature::FeatureVector features;
+};
+
+std::vector<float> CopyFrameSamples(
+    const tunerlock::AudioBuffer& buffer,
+    std::size_t start_sample,
+    std::size_t frame_size) {
+  std::vector<float> frame(frame_size, 0.0F);
+  if (start_sample >= buffer.samples.size()) {
+    return frame;
+  }
+
+  const std::size_t available =
+      std::min(frame_size, buffer.samples.size() - start_sample);
+  std::copy_n(buffer.samples.begin() + static_cast<std::ptrdiff_t>(start_sample),
+              available,
+              frame.begin());
+  return frame;
+}
+
+FrameAnalysis AnalyzeFrame(
+    const tunerlock::AudioBuffer& buffer,
+    std::size_t frame_index,
+    std::size_t start_sample,
+    std::size_t frame_size) {
+  FrameAnalysis analysis;
+  analysis.frame_index = frame_index;
+  analysis.start_sample = start_sample;
+  analysis.sample_rate = buffer.sample_rate;
+  analysis.fft_size = frame_size;
+  analysis.start_time_seconds =
+      static_cast<double>(start_sample) / static_cast<double>(buffer.sample_rate);
+
+  std::vector<float> frame =
+      CopyFrameSamples(buffer, start_sample, frame_size);
+  std::vector<float> window_input = frame;
+  const std::vector<float> window =
+      tunerlock::audio::HannWindow(window_input.size());
+  tunerlock::audio::ApplyWindowInPlace(window_input, window);
+
+  const auto spectrum =
+      tunerlock::fft::DiscreteFourierTransform(window_input);
+  analysis.magnitudes = tunerlock::fft::Magnitudes(spectrum);
+  analysis.yin_pitch_hz = tunerlock::pitch::EstimatePitchYin(
+      frame.data(),
+      static_cast<int>(frame.size()),
+      buffer.sample_rate);
+  analysis.harmonic_score =
+      tunerlock::feature::ComputeHarmonicSumSpectrum(
+          analysis.magnitudes,
+          buffer.sample_rate,
+          frame_size,
+          analysis.yin_pitch_hz);
+  analysis.features = tunerlock::feature::ExtractFeatures(
+      tunerlock::feature::FeatureInput{
+          frame.data(),
+          frame.size(),
+          buffer.sample_rate,
+          &analysis.magnitudes,
+          frame_size,
+          analysis.yin_pitch_hz,
+          analysis.harmonic_score,
+      });
+
+  return analysis;
+}
 
 void WriteCsv(
     const std::string& path,
@@ -53,6 +130,56 @@ void WriteHarmonicCsv(
         << contribution.magnitude << ','
         << contribution.weight << ','
         << contribution.weighted_magnitude << '\n';
+  }
+}
+
+void WriteFrameFeaturesCsv(
+    const std::string& path,
+    const std::vector<FrameAnalysis>& frames) {
+  std::ofstream csv(path);
+  csv << "frame,start_sample,start_time_seconds,yin_pitch_hz,rms,"
+      << "peak_amplitude,fft_peak_frequency_hz,fft_peak_magnitude,"
+      << "spectral_centroid_hz,harmonic_normalized_score,"
+      << "harmonic_energy_ratio,harmonic_count,"
+      << "octave_1_quality,octave_2_quality,octave_3_quality,"
+      << "octave_4_quality\n";
+
+  for (const FrameAnalysis& frame : frames) {
+    double octave_quality[4] = {0.0, 0.0, 0.0, 0.0};
+    for (int divisor = 1; divisor <= 4; ++divisor) {
+      const double candidate_hz =
+          frame.yin_pitch_hz / static_cast<double>(divisor);
+      if (candidate_hz <= 0.0) {
+        continue;
+      }
+
+      const tunerlock::feature::HarmonicScore score =
+          tunerlock::feature::ComputeHarmonicSumSpectrum(
+              frame.magnitudes,
+              frame.sample_rate,
+              frame.fft_size,
+              candidate_hz);
+      octave_quality[divisor - 1] =
+          score.normalized_score * 0.65 +
+          score.harmonic_energy_ratio * 0.35;
+    }
+
+    csv << frame.frame_index << ','
+        << frame.start_sample << ','
+        << frame.start_time_seconds << ','
+        << frame.features.yin_pitch_hz << ','
+        << frame.features.rms << ','
+        << frame.features.peak_amplitude << ','
+        << frame.features.fft_peak_frequency_hz << ','
+        << frame.features.fft_peak_magnitude << ','
+        << frame.features.spectral_centroid_hz << ','
+        << frame.features.harmonic_normalized_score << ','
+        << frame.features.harmonic_energy_ratio << ','
+        << frame.features.harmonic_count << ','
+        << octave_quality[0] << ','
+        << octave_quality[1] << ','
+        << octave_quality[2] << ','
+        << octave_quality[3] << '\n';
   }
 }
 
@@ -149,6 +276,8 @@ int main(int argc, char** argv) {
       argc > 3 ? argv[3] : "tracking_engine/build/fft_magnitudes.svg";
   const std::string harmonic_csv_path =
       argc > 4 ? argv[4] : "tracking_engine/build/harmonic_contributions.csv";
+  const std::string frame_features_csv_path =
+      argc > 5 ? argv[5] : "tracking_engine/build/frame_features.csv";
 
   tunerlock::audio::WavReadResult wav =
       tunerlock::audio::ReadWavFile(wav_path);
@@ -160,47 +289,57 @@ int main(int argc, char** argv) {
   tunerlock::audio::RemoveDcOffsetInPlace(wav.buffer);
   tunerlock::audio::NormalizeInPlace(wav.buffer);
 
-  std::vector<float> window_input =
-      tunerlock::audio::CopySamplesForWindowing(wav.buffer);
-  const std::vector<float> window =
-      tunerlock::audio::HannWindow(window_input.size());
-  tunerlock::audio::ApplyWindowInPlace(window_input, window);
+  constexpr std::size_t kFrameSize = tunerlock::audio::kDefaultFrameSize;
+  constexpr std::size_t kHopSize = kFrameSize;
+  std::vector<FrameAnalysis> frames;
+  for (std::size_t start = 0, frame_index = 0;
+       start < wav.buffer.samples.size();
+       start += kHopSize, ++frame_index) {
+    frames.push_back(AnalyzeFrame(wav.buffer, frame_index, start, kFrameSize));
+  }
 
-  const auto spectrum =
-      tunerlock::fft::DiscreteFourierTransform(window_input);
-  const std::vector<double> magnitudes =
-      tunerlock::fft::Magnitudes(spectrum);
+  if (frames.empty()) {
+    std::cerr << "No frames to analyze.\n";
+    return 1;
+  }
 
-  const double pitch_hz = tunerlock::pitch::EstimatePitchYin(
-      wav.buffer.samples.data(),
-      static_cast<int>(wav.buffer.samples.size()),
-      wav.buffer.sample_rate);
-  const tunerlock::feature::HarmonicScore harmonic_score =
-      tunerlock::feature::ComputeHarmonicSumSpectrum(
-          magnitudes,
-          wav.buffer.sample_rate,
-          window_input.size(),
-          pitch_hz);
+  const FrameAnalysis& first_frame = frames.front();
 
-  WriteCsv(csv_path, magnitudes, wav.buffer.sample_rate, window_input.size());
-  WriteSvg(svg_path, magnitudes, wav.buffer.sample_rate, window_input.size(), 5000.0);
+  WriteCsv(
+      csv_path,
+      first_frame.magnitudes,
+      wav.buffer.sample_rate,
+      kFrameSize);
+  WriteSvg(
+      svg_path,
+      first_frame.magnitudes,
+      wav.buffer.sample_rate,
+      kFrameSize,
+      5000.0);
   WriteHarmonicCsv(
       harmonic_csv_path,
-      harmonic_score,
+      first_frame.harmonic_score,
       wav.buffer.sample_rate,
-      window_input.size());
+      kFrameSize);
+  WriteFrameFeaturesCsv(frame_features_csv_path, frames);
 
   std::cout << "csv=" << csv_path << '\n';
   std::cout << "svg=" << svg_path << '\n';
   std::cout << "harmonic_csv=" << harmonic_csv_path << '\n';
-  std::cout << "yin_pitch_hz=" << pitch_hz << '\n';
-  std::cout << "harmonic.weighted_sum=" << harmonic_score.weighted_sum << '\n';
+  std::cout << "frame_features_csv=" << frame_features_csv_path << '\n';
+  std::cout << "frame_count=" << frames.size() << '\n';
+  std::cout << "frame_size=" << kFrameSize << '\n';
+  std::cout << "hop_size=" << kHopSize << '\n';
+  std::cout << "frame.0.yin_pitch_hz=" << first_frame.yin_pitch_hz << '\n';
+  std::cout << "frame.0.harmonic.weighted_sum="
+            << first_frame.harmonic_score.weighted_sum << '\n';
   std::cout << "harmonic.normalized_score="
-            << harmonic_score.normalized_score << '\n';
+            << first_frame.harmonic_score.normalized_score << '\n';
   std::cout << "harmonic.energy_ratio="
-            << harmonic_score.harmonic_energy_ratio << '\n';
-  std::cout << "harmonic.count=" << harmonic_score.harmonic_count << '\n';
-  for (const auto& contribution : harmonic_score.contributions) {
+            << first_frame.harmonic_score.harmonic_energy_ratio << '\n';
+  std::cout << "harmonic.count="
+            << first_frame.harmonic_score.harmonic_count << '\n';
+  for (const auto& contribution : first_frame.harmonic_score.contributions) {
     std::cout << "harmonic." << contribution.harmonic_number
               << " expected_hz=" << contribution.expected_frequency_hz
               << " bin=" << contribution.bin
@@ -208,9 +347,20 @@ int main(int argc, char** argv) {
               << tunerlock::fft::BinToFrequency(
                      contribution.bin,
                      wav.buffer.sample_rate,
-                     window_input.size())
+                     kFrameSize)
               << " magnitude=" << contribution.magnitude
               << " weighted=" << contribution.weighted_magnitude << '\n';
+  }
+
+  const std::size_t preview_count = std::min<std::size_t>(frames.size(), 8);
+  for (std::size_t i = 0; i < preview_count; ++i) {
+    const FrameAnalysis& frame = frames[i];
+    std::cout << "frame." << frame.frame_index
+              << " time_s=" << frame.start_time_seconds
+              << " yin_hz=" << frame.features.yin_pitch_hz
+              << " fft_peak_hz=" << frame.features.fft_peak_frequency_hz
+              << " harmonic_ratio=" << frame.features.harmonic_energy_ratio
+              << " rms=" << frame.features.rms << '\n';
   }
   return 0;
 }

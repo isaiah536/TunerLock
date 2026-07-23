@@ -52,6 +52,32 @@ int main() {
   assert(peak_bin == target_bin || peak_bin == kFftSize - target_bin);
   assert(magnitudes[peak_bin] > magnitudes[0]);
 
+  const tunerlock::fft::TargetBandEnergy target_energy =
+      tunerlock::fft::ComputeTargetBandEnergy(
+          magnitudes,
+          kSampleRate,
+          kFftSize,
+          kTargetFrequency);
+  assert(target_energy.total_energy > 0.0);
+  assert(target_energy.target_energy > 0.0);
+  assert(target_energy.ratio > 0.95);
+  assert(target_energy.ratio <= 1.0);
+  assert(target_energy.harmonic_bands_used == 5);
+
+  const tunerlock::fft::TargetBandEnergy wrong_target =
+      tunerlock::fft::ComputeTargetBandEnergy(
+          magnitudes,
+          kSampleRate,
+          kFftSize,
+          300.0,
+          tunerlock::fft::TargetBandOptions{2, 0, 5000.0});
+  assert(wrong_target.ratio < 0.01);
+
+  const tunerlock::fft::TargetBandEnergy invalid =
+      tunerlock::fft::ComputeTargetBandEnergy(
+          {}, kSampleRate, kFftSize, kTargetFrequency);
+  assert(invalid.ratio == 0.0);
+
   assert(tunerlock::fft::FindPeakBin({}) == 0);
   assert(tunerlock::fft::BinToFrequency(10, 0, kFftSize) == 0.0);
   assert(tunerlock::fft::FrequencyToBin(0.0, kSampleRate, kFftSize) == 0);

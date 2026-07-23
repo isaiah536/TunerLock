@@ -10,6 +10,7 @@ namespace tunerlock {
 enum class TrackingState {
   Idle,
   Locking,
+  Transition,
   Locked,
   Recovering,
   Lost,
@@ -44,8 +45,10 @@ struct PitchResult {
 
 struct TrackingResult {
   double frequency_hz = 0.0;
+  double target_frequency_hz = 0.0;
   double cents = 0.0;
   double confidence = 0.0;
+  int midi_note = -1;
   bool locked = false;
 };
 

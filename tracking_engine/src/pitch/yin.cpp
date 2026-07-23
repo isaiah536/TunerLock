@@ -102,12 +102,29 @@ double EstimatePitchYin(
     float threshold,
     double min_frequency_hz,
     double max_frequency_hz) {
+  return AnalyzePitchYin(
+      samples,
+      sample_count,
+      sample_rate,
+      threshold,
+      min_frequency_hz,
+      max_frequency_hz).frequency_hz;
+}
+
+YinResult AnalyzePitchYin(
+    const float* samples,
+    int sample_count,
+    int sample_rate,
+    float threshold,
+    double min_frequency_hz,
+    double max_frequency_hz) {
+  YinResult result;
   if (samples == nullptr ||
       sample_count <= 0 ||
       sample_rate <= 0 ||
       min_frequency_hz <= 0.0 ||
       max_frequency_hz <= min_frequency_hz) {
-    return 0.0;
+    return result;
   }
 
   const std::size_t sample_count_size = static_cast<std::size_t>(sample_count);
@@ -119,7 +136,7 @@ double EstimatePitchYin(
   min_tau = std::max<std::size_t>(min_tau, 2);
   max_tau = std::min(max_tau, sample_count_size > 1 ? sample_count_size - 1 : 0);
   if (min_tau >= max_tau) {
-    return 0.0;
+    return result;
   }
 
   const std::vector<float> difference =
@@ -129,15 +146,23 @@ double EstimatePitchYin(
 
   const int tau = AbsoluteThreshold(cmndf, threshold, min_tau, max_tau);
   if (tau < 0) {
-    return 0.0;
+    return result;
   }
 
   const float tau_fine = ParabolicInterpolation(cmndf, static_cast<std::size_t>(tau));
   if (tau_fine <= 0.0F) {
-    return 0.0;
+    return result;
   }
 
-  return static_cast<double>(sample_rate) / static_cast<double>(tau_fine);
+  result.frequency_hz =
+      static_cast<double>(sample_rate) / static_cast<double>(tau_fine);
+  result.cmndf_value = std::clamp(
+      static_cast<double>(cmndf[static_cast<std::size_t>(tau)]),
+      0.0,
+      1.0);
+  result.periodicity = 1.0 - result.cmndf_value;
+  result.detected = true;
+  return result;
 }
 
 }  // namespace tunerlock::pitch

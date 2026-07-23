@@ -12,7 +12,9 @@ class TrackingEngineService {
   })
       : _microphoneInput =
             microphoneInput ?? MicrophoneInputFactory.create(),
-        _bridge = bridge ?? createTrackingEngineBridge();
+        _bridge = bridge ?? createTrackingEngineBridge() {
+    _bridge?.setTrackingMode(TrackingMode.tuning);
+  }
 
   final MicrophoneInputService _microphoneInput;
   final TrackingEngineBridge? _bridge;
@@ -40,6 +42,10 @@ class TrackingEngineService {
 
   Future<void> stopListening() {
     return _microphoneInput.stop();
+  }
+
+  void setTrackingMode(TrackingMode mode) {
+    _bridge?.setTrackingMode(mode);
   }
 
   Future<TunerReading> latestReading() async {

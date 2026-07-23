@@ -5,6 +5,13 @@
 
 namespace tunerlock::pitch {
 
+struct YinResult {
+  double frequency_hz = 0.0;
+  double periodicity = 0.0;
+  double cmndf_value = 1.0;
+  bool detected = false;
+};
+
 constexpr float kDefaultYinThreshold = 0.15F;
 constexpr double kDefaultMinFrequencyHz = 40.0;
 constexpr double kDefaultMaxFrequencyHz = 2000.0;
@@ -29,6 +36,14 @@ float ParabolicInterpolation(
     std::size_t tau);
 
 double EstimatePitchYin(
+    const float* samples,
+    int sample_count,
+    int sample_rate,
+    float threshold = kDefaultYinThreshold,
+    double min_frequency_hz = kDefaultMinFrequencyHz,
+    double max_frequency_hz = kDefaultMaxFrequencyHz);
+
+YinResult AnalyzePitchYin(
     const float* samples,
     int sample_count,
     int sample_rate,
