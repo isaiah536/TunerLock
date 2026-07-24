@@ -68,13 +68,41 @@ class TrackingEngineService {
     _bridge?.setTrackingMode(mode);
   }
 
+  void setTrackingProfile({
+    required InstrumentProfile profile,
+    required TrackingMode mode,
+  }) {
+    final profileChanged = _profile != profile;
+    final modeChanged = _mode != mode;
+    if (!profileChanged && !modeChanged) {
+      return;
+    }
+
+    _profile = profile;
+    _mode = mode;
+    _frameSlicer.reset();
+
+    if (profileChanged) {
+      _bridge?.setInstrumentProfile(profile);
+    }
+    if (modeChanged || profileChanged) {
+      _bridge?.setTrackingMode(mode);
+    }
+  }
+
   void setInstrumentProfile(InstrumentProfile profile) {
     if (_profile == profile) {
       return;
     }
-    _profile = profile;
+    setTrackingProfile(profile: profile, mode: _mode);
+  }
+
+  void setReferencePitch(double frequencyHz) {
+    if (frequencyHz <= 0) {
+      return;
+    }
     _frameSlicer.reset();
-    _bridge?.setInstrumentProfile(profile);
+    _bridge?.setReferencePitch(frequencyHz);
   }
 
   Future<TunerReading> latestReading() async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../services/tracking_engine_bridge.dart';
+import 'score_tuner_view.dart';
 
 class BottomTabs extends StatelessWidget {
   const BottomTabs({
@@ -17,17 +18,26 @@ class BottomTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 90,
-      margin: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+      height: 92,
+      margin: const EdgeInsets.fromLTRB(34, 0, 34, 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.13)),
-        borderRadius: BorderRadius.circular(8),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFE5E0D7), Color(0xFFC9C2B7)],
+        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.50)),
+        borderRadius: BorderRadius.circular(34),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.32),
-            blurRadius: 26,
-            offset: const Offset(0, 10),
+            color: const Color(0xFF6C6258).withValues(alpha: 0.24),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.48),
+            blurRadius: 8,
+            offset: const Offset(-2, -2),
           ),
         ],
       ),
@@ -36,30 +46,30 @@ class BottomTabs extends StatelessWidget {
         children: [
           BottomTab(
             icon: Icons.music_note_rounded,
-            label: 'Strings',
+            label: 'STRINGS',
             active: activeProfile == InstrumentProfile.strings,
-            activeColor: const Color(0xFF4EDEA3),
+            activeColor: profileAccent(InstrumentProfile.strings),
             onTap: () => onProfileSelected(InstrumentProfile.strings),
           ),
           BottomTab(
             icon: Icons.air_rounded,
-            label: 'Wind',
+            label: 'WIND',
             active: activeProfile == InstrumentProfile.wind,
-            activeColor: const Color(0xFF67E8F9),
+            activeColor: profileAccent(InstrumentProfile.wind),
             onTap: () => onProfileSelected(InstrumentProfile.wind),
           ),
           BottomTab(
             icon: Icons.campaign_outlined,
-            label: 'Brass',
+            label: 'BRASS',
             active: activeProfile == InstrumentProfile.brass,
-            activeColor: const Color(0xFFFFC21A),
+            activeColor: profileAccent(InstrumentProfile.brass),
             onTap: () => onProfileSelected(InstrumentProfile.brass),
           ),
           BottomTab(
-            icon: Icons.timer_outlined,
-            label: 'Metronom',
+            icon: Icons.av_timer_rounded,
+            label: 'TEMPO',
             active: false,
-            activeColor: const Color(0xFFFFD166),
+            activeColor: const Color(0xFF7E786E),
             onTap: onMetronomeTap,
           ),
         ],
@@ -86,18 +96,53 @@ class BottomTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? activeColor : Colors.white.withValues(alpha: 0.46);
+    final color = active ? activeColor : const Color(0xFF817B72);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(26),
       child: SizedBox(
-        width: 78,
-        height: 74,
+        width: 70,
+        height: 78,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 27, color: color),
-            const SizedBox(height: 7),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 42,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: active
+                    ? const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFFF6F3ED), Color(0xFFCFC8BE)],
+                      )
+                    : null,
+                border: active
+                    ? Border.all(color: Colors.white.withValues(alpha: 0.48))
+                    : null,
+                boxShadow: active
+                    ? [
+                        BoxShadow(
+                          color: Colors.white.withValues(alpha: 0.38),
+                          blurRadius: 4,
+                          offset: const Offset(-1, -1),
+                        ),
+                        BoxShadow(
+                          color: const Color(
+                            0xFF6C6258,
+                          ).withValues(alpha: 0.20),
+                          blurRadius: 8,
+                          offset: const Offset(2, 4),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Icon(icon, size: active ? 24 : 27, color: color),
+            ),
+            const SizedBox(height: 5),
             Text(
               label,
               maxLines: 1,
@@ -105,8 +150,19 @@ class BottomTab extends StatelessWidget {
               softWrap: false,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: active ? FontWeight.w800 : FontWeight.w600,
+                fontWeight: FontWeight.w800,
                 color: color,
+                fontFamily: 'Georgia',
+              ),
+            ),
+            const SizedBox(height: 5),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: active ? 29 : 0,
+              height: 3,
+              decoration: BoxDecoration(
+                color: activeColor,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
           ],

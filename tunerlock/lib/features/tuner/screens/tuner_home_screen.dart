@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -8,7 +9,7 @@ import '../../settings/screens/settings_screen.dart';
 import '../models/tuner_reading.dart';
 import '../providers/tuner_state.dart';
 import '../widgets/bottom_tabs.dart';
-import '../widgets/celestial_tuner_view.dart';
+import '../widgets/score_tuner_view.dart';
 
 class TunerHomeScreen extends StatefulWidget {
   const TunerHomeScreen({super.key});
@@ -20,10 +21,14 @@ class TunerHomeScreen extends StatefulWidget {
 class _TunerHomeScreenState extends State<TunerHomeScreen> {
   static const _uiUpdateInterval = Duration(milliseconds: 120);
   static const _confidenceBlend = 0.3;
+  static const _maxPitchTrailSamples = 72;
 
   final TrackingEngineService _engine = TrackingEngineService();
   TunerReading _reading = TunerState.previewReading;
   InstrumentProfile _profile = InstrumentProfile.strings;
+  TrackingMode _mode = TrackingMode.tuning;
+  double _referencePitchHz = 440.0;
+  final List<double> _pitchTrailCents = <double>[];
   StreamSubscription<TunerReading>? _subscription;
   DateTime? _lastUiUpdate;
 
@@ -53,6 +58,7 @@ class _TunerHomeScreenState extends State<TunerHomeScreen> {
           reading.confidence * _confidenceBlend;
       setState(() {
         _reading = reading.copyWith(confidence: displayedConfidence);
+        _appendPitchTrail(reading);
         _lastUiUpdate = now;
       });
     });
@@ -68,64 +74,65 @@ class _TunerHomeScreenState extends State<TunerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final reading = _reading;
-
     return Scaffold(
-      backgroundColor: const Color(0xFF050812),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0, -0.2),
-            radius: 1.2,
-            colors: _backgroundColors(_profile),
-          ),
-        ),
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return Column(
-                children: [
-                  _TopBar(profile: _profile),
-                  Expanded(
-                    child: Center(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(22, 8, 22, 18),
+      backgroundColor: const Color(0xFFF7F0E2),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: CustomPaint(painter: _PaperPainter())),
+          SafeArea(
+            child: Column(
+              children: [
+                _TopBar(
+                  referencePitchHz: _referencePitchHz,
+                  onReferencePitchChanged: _selectReferencePitch,
+                ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(30, 34, 30, 28),
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
-                            minHeight: (constraints.maxHeight - 198).clamp(
-                              420.0,
-                              720.0,
+                            minHeight: (constraints.maxHeight - 18).clamp(
+                              600.0,
+                              820.0,
                             ),
                           ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CelestialTunerView(
-                                reading: reading,
-                                profile: _profile,
-                              ),
-                              const SizedBox(height: 22),
-                              _DeviationPanel(
-                                reading: reading,
-                                accent: _profileAccent(_profile),
-                              ),
-                            ],
+                          child: ScoreTunerView(
+                            reading: _reading,
+                            profile: _profile,
+                            mode: _mode,
+                            pitchTrailCents: _pitchTrailCents,
+                            onModeChanged: _selectMode,
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
-                  BottomTabs(
-                    activeProfile: _profile,
-                    onProfileSelected: _selectProfile,
-                  ),
-                ],
-              );
-            },
+                ),
+                BottomTabs(
+                  activeProfile: _profile,
+                  onProfileSelected: _selectProfile,
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
+  }
+
+  void _selectMode(TrackingMode mode) {
+    if (_mode == mode) {
+      return;
+    }
+    setState(() {
+      _mode = mode;
+      _reading = TunerState.previewReading;
+      _lastUiUpdate = null;
+      _pitchTrailCents.clear();
+    });
+    _engine.setTrackingProfile(profile: _profile, mode: mode);
   }
 
   void _selectProfile(InstrumentProfile profile) {
@@ -136,58 +143,84 @@ class _TunerHomeScreenState extends State<TunerHomeScreen> {
       _profile = profile;
       _reading = TunerState.previewReading;
       _lastUiUpdate = null;
+      _pitchTrailCents.clear();
     });
-    _engine.setInstrumentProfile(profile);
+    _engine.setTrackingProfile(profile: profile, mode: _mode);
+  }
+
+  void _selectReferencePitch(double referencePitchHz) {
+    if (_referencePitchHz == referencePitchHz) {
+      return;
+    }
+    setState(() {
+      _referencePitchHz = referencePitchHz;
+      _reading = TunerState.previewReading;
+      _lastUiUpdate = null;
+      _pitchTrailCents.clear();
+    });
+    _engine.setReferencePitch(referencePitchHz);
+  }
+
+  void _appendPitchTrail(TunerReading reading) {
+    if (reading.currentFrequency <= 0) {
+      return;
+    }
+    _pitchTrailCents.add(reading.cents.clamp(-80.0, 80.0));
+    if (_pitchTrailCents.length > _maxPitchTrailSamples) {
+      _pitchTrailCents.removeRange(
+        0,
+        _pitchTrailCents.length - _maxPitchTrailSamples,
+      );
+    }
   }
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.profile});
+  const _TopBar({
+    required this.referencePitchHz,
+    required this.onReferencePitchChanged,
+  });
 
-  final InstrumentProfile profile;
+  final double referencePitchHz;
+  final ValueChanged<double> onReferencePitchChanged;
 
   @override
   Widget build(BuildContext context) {
-    final accent = _profileAccent(profile);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 14, 16, 8),
+    return Container(
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: const Color(0xFFB8B0A4).withValues(alpha: 0.5),
+          ),
+        ),
+      ),
       child: Row(
         children: [
-          Icon(Icons.graphic_eq_rounded, color: accent, size: 27),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'Auralock',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Color(0xFFE8EEFF),
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
+          _RoundGlassIconButton(
+            tooltip: 'Menu',
+            icon: Icons.menu_rounded,
+            onTap: () {},
+          ),
+          Expanded(
+            child: Center(
+              child: _ReferencePitchSelector(
+                referencePitchHz: referencePitchHz,
+                onReferencePitchChanged: onReferencePitchChanged,
               ),
             ),
           ),
-          _ModeChip(profile: profile),
-          const SizedBox(width: 8),
-          IconButton(
+          _RoundGlassIconButton(
             tooltip: 'Settings',
-            onPressed: () {
+            icon: Icons.settings_outlined,
+            onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (context) => const SettingsScreen(),
                 ),
               );
             },
-            icon: const Icon(Icons.settings_rounded),
-            color: Colors.white.withValues(alpha: 0.78),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withValues(alpha: 0.08),
-              fixedSize: const Size(44, 44),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.12)),
-              ),
-            ),
           ),
         ],
       ),
@@ -195,297 +228,355 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-class _ModeChip extends StatelessWidget {
-  const _ModeChip({required this.profile});
-
-  final InstrumentProfile profile;
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = _profileAccent(profile);
-    return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.13)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(color: accent, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            _profileLabel(profile),
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.86),
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DeviationPanel extends StatelessWidget {
-  const _DeviationPanel({required this.reading, required this.accent});
-
-  final TunerReading reading;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasFrequency = reading.currentFrequency > 0;
-    final showLockedHz = hasFrequency && reading.isLocked;
-    final lockState = hasFrequency
-        ? (reading.isLocked ? 'LOCKED' : 'TRACKING')
-        : 'IDLE';
-    final markerPosition = hasFrequency
-        ? ((reading.cents.clamp(-50.0, 50.0) + 50.0) / 100.0)
-        : 0.5;
-    final markerColor = showLockedHz ? accent : const Color(0xFFFFA69E);
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 430),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _LockStateValue(
-                    value: lockState,
-                    active: showLockedHz,
-                    accent: accent,
-                  ),
-                ),
-                _ConfidenceBars(
-                  confidence: hasFrequency ? reading.confidence : 0,
-                  accent: accent,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            height: 48,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                const markerSize = 32.0;
-                final left =
-                    markerPosition * (constraints.maxWidth - markerSize);
-                return Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF182034).withValues(alpha: 0.9),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.11),
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    Positioned(
-                      left: 26,
-                      child: Text('-50', style: _scaleTextStyle()),
-                    ),
-                    Positioned(
-                      right: 26,
-                      child: Text('+50', style: _scaleTextStyle()),
-                    ),
-                    Positioned(
-                      left: constraints.maxWidth / 2 - 0.5,
-                      top: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 1,
-                        color: accent.withValues(alpha: 0.58),
-                      ),
-                    ),
-                    Positioned(
-                      left: constraints.maxWidth / 2 + 5,
-                      top: 17,
-                      child: Text(
-                        '0',
-                        style: TextStyle(
-                          color: accent.withValues(alpha: 0.78),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: left,
-                      top: 8,
-                      child: Container(
-                        width: markerSize,
-                        height: markerSize,
-                        decoration: BoxDecoration(
-                          color: markerColor,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: accent.withValues(
-                                alpha: showLockedHz ? 0.48 : 0.26,
-                              ),
-                              blurRadius: showLockedHz ? 24 : 18,
-                              spreadRadius: showLockedHz ? 4 : 1,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 15),
-          Text(
-            'EVENT HORIZON DEVIATION',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.42),
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LockStateValue extends StatelessWidget {
-  const _LockStateValue({
-    required this.value,
-    required this.active,
-    required this.accent,
+class _RoundGlassIconButton extends StatefulWidget {
+  const _RoundGlassIconButton({
+    required this.icon,
+    required this.tooltip,
+    this.onTap,
   });
 
-  final String value;
-  final bool active;
-  final Color accent;
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onTap;
+
+  @override
+  State<_RoundGlassIconButton> createState() => _RoundGlassIconButtonState();
+}
+
+class _RoundGlassIconButtonState extends State<_RoundGlassIconButton> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed == value) {
+      return;
+    }
+    setState(() {
+      _pressed = value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final color = active
-        ? const Color(0xFFE8EEFF)
-        : Colors.white.withValues(alpha: 0.36);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('LOCK STATE', style: _panelLabelStyle()),
-        const SizedBox(height: 5),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: color,
-            fontSize: 25,
-            fontWeight: FontWeight.w900,
-            height: 0.9,
-            shadows: active
-                ? [Shadow(color: accent.withValues(alpha: 0.2), blurRadius: 14)]
-                : null,
+    return Tooltip(
+      message: widget.tooltip,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => _setPressed(true),
+        onTapUp: (_) => _setPressed(false),
+        onTapCancel: () => _setPressed(false),
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _pressed ? 0.96 : 1,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeOut,
+          child: SizedBox(
+            width: 46,
+            height: 46,
+            child: CustomPaint(
+              painter: _RoundGlassButtonPainter(pressed: _pressed),
+              child: Icon(
+                widget.icon,
+                color: const Color(0xFF2A2927),
+                size: 25,
+              ),
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
 
-class _ConfidenceBars extends StatelessWidget {
-  const _ConfidenceBars({required this.confidence, required this.accent});
+class _RoundGlassButtonPainter extends CustomPainter {
+  const _RoundGlassButtonPainter({required this.pressed});
 
-  final double confidence;
-  final Color accent;
+  final bool pressed;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final shape = RRect.fromRectAndRadius(
+      rect.deflate(4),
+      Radius.circular(size.height / 2),
+    );
+
+    final shadowPaint = Paint()
+      ..color = const Color(0xFF6C6258).withValues(alpha: pressed ? 0.10 : 0.15)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, pressed ? 4 : 6);
+    canvas.drawRRect(
+      shape.shift(pressed ? const Offset(0, 1.5) : const Offset(0, 3)),
+      shadowPaint,
+    );
+
+    final surfacePaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xBFECE6DC), Color(0x99D8D1C6), Color(0x88C9C2B7)],
+        stops: [0, 0.56, 1],
+      ).createShader(rect);
+    canvas.drawRRect(shape, surfacePaint);
+
+    final edgePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..color = Colors.black.withValues(alpha: pressed ? 0.16 : 0.08)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.8);
+    canvas.drawRRect(shape.deflate(1.4), edgePaint);
+
+    final highlightRect = Rect.fromLTRB(
+      shape.left + 6,
+      shape.top + 4,
+      shape.right - 6,
+      shape.top + 15,
+    );
+    final highlightPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withValues(alpha: pressed ? 0.18 : 0.32),
+          Colors.white.withValues(alpha: 0),
+        ],
+      ).createShader(highlightRect)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(highlightRect, Radius.circular(size.height / 2)),
+      highlightPaint,
+    );
+
+    final reflectionRect = Rect.fromLTRB(
+      shape.left + 7,
+      size.height * 0.62,
+      shape.right - 7,
+      shape.bottom - 4,
+    );
+    final reflectionPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withValues(alpha: 0),
+          Colors.white.withValues(alpha: pressed ? 0.03 : 0.07),
+        ],
+      ).createShader(reflectionRect)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(reflectionRect, Radius.circular(size.height / 2)),
+      reflectionPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _RoundGlassButtonPainter oldDelegate) {
+    return oldDelegate.pressed != pressed;
+  }
+}
+
+class _ReferencePitchSelector extends StatelessWidget {
+  const _ReferencePitchSelector({
+    required this.referencePitchHz,
+    required this.onReferencePitchChanged,
+  });
+
+  static const _minReferencePitchHz = 338;
+  static const _maxReferencePitchHz = 466;
+
+  final double referencePitchHz;
+  final ValueChanged<double> onReferencePitchChanged;
 
   @override
   Widget build(BuildContext context) {
-    final activeBars = (confidence.clamp(0.0, 1.0) * 5).ceil();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('CONFIDENCE', style: _panelLabelStyle()),
-        const SizedBox(height: 9),
-        Row(
-          children: List.generate(5, (index) {
-            final active = index < activeBars;
-            return Padding(
-              padding: EdgeInsets.only(right: index == 4 ? 0 : 5),
-              child: Container(
-                width: 6,
-                height: index.isEven ? 17 : 14,
-                decoration: BoxDecoration(
-                  color: active ? accent : Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(6),
-                ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _showReferencePitchPicker(context),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'A = ${referencePitchHz.toStringAsFixed(0)} Hz',
+              style: const TextStyle(
+                color: Color(0xFF151719),
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Georgia',
               ),
-            );
-          }),
+            ),
+            const SizedBox(width: 3),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Color(0xFF6B655D),
+              size: 20,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
-}
 
-TextStyle _panelLabelStyle() {
-  return TextStyle(
-    color: Colors.white.withValues(alpha: 0.62),
-    fontSize: 12,
-    fontWeight: FontWeight.w900,
-  );
-}
+  Future<void> _showReferencePitchPicker(BuildContext context) async {
+    final initial = referencePitchHz.round().clamp(
+      _minReferencePitchHz,
+      _maxReferencePitchHz,
+    );
+    var selectedHz = initial;
+    final controller = FixedExtentScrollController(
+      initialItem: initial - _minReferencePitchHz,
+    );
 
-TextStyle _scaleTextStyle() {
-  return TextStyle(
-    color: Colors.white.withValues(alpha: 0.34),
-    fontSize: 13,
-    fontWeight: FontWeight.w800,
-  );
-}
+    final result = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setPickerState) {
+            return Container(
+              height: 310,
+              margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8ED),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: const Color(0xFF9B9284).withValues(alpha: 0.25),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 12, 6),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Reference Pitch',
+                            style: TextStyle(
+                              color: Color(0xFF151719),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Georgia',
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () =>
+                              Navigator.of(context).pop(selectedHz),
+                          child: const Text('Done'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          height: 48,
+                          margin: const EdgeInsets.symmetric(horizontal: 44),
+                          decoration: BoxDecoration(
+                            color: const Color(
+                              0xFFE7DED0,
+                            ).withValues(alpha: 0.45),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        ListWheelScrollView.useDelegate(
+                          controller: controller,
+                          itemExtent: 44,
+                          physics: const FixedExtentScrollPhysics(),
+                          perspective: 0.0025,
+                          diameterRatio: 1.25,
+                          onSelectedItemChanged: (index) {
+                            setPickerState(() {
+                              selectedHz = _minReferencePitchHz + index;
+                            });
+                          },
+                          childDelegate: ListWheelChildBuilderDelegate(
+                            childCount:
+                                _maxReferencePitchHz - _minReferencePitchHz + 1,
+                            builder: (context, index) {
+                              if (index < 0) {
+                                return null;
+                              }
+                              final hz = _minReferencePitchHz + index;
+                              return Center(
+                                child: Text(
+                                  'A = $hz Hz',
+                                  style: TextStyle(
+                                    color: hz == selectedHz
+                                        ? const Color(0xFF151719)
+                                        : const Color(0xFF6C665E),
+                                    fontSize: hz == selectedHz ? 24 : 20,
+                                    fontWeight: hz == selectedHz
+                                        ? FontWeight.w800
+                                        : FontWeight.w500,
+                                    fontFamily: 'Georgia',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
 
-List<Color> _backgroundColors(InstrumentProfile profile) {
-  switch (profile) {
-    case InstrumentProfile.strings:
-      return const [Color(0xFF182445), Color(0xFF07101F), Color(0xFF03050B)];
-    case InstrumentProfile.wind:
-      return const [Color(0xFF203C56), Color(0xFF111633), Color(0xFF050814)];
-    case InstrumentProfile.brass:
-      return const [Color(0xFF4C1F0A), Color(0xFF1A0A0A), Color(0xFF050407)];
+    if (result != null) {
+      onReferencePitchChanged(result.toDouble());
+    }
   }
 }
 
-Color _profileAccent(InstrumentProfile profile) {
-  switch (profile) {
-    case InstrumentProfile.strings:
-      return const Color(0xFF4EDEA3);
-    case InstrumentProfile.wind:
-      return const Color(0xFF67E8F9);
-    case InstrumentProfile.brass:
-      return const Color(0xFFFFC21A);
-  }
-}
+class _PaperPainter extends CustomPainter {
+  const _PaperPainter();
 
-String _profileLabel(InstrumentProfile profile) {
-  switch (profile) {
-    case InstrumentProfile.strings:
-      return 'STRINGS';
-    case InstrumentProfile.wind:
-      return 'WIND';
-    case InstrumentProfile.brass:
-      return 'BRASS';
+  @override
+  void paint(Canvas canvas, Size size) {
+    final background = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFFFBF4E8), Color(0xFFF2E9DA)],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, background);
+
+    final vignette = Paint()
+      ..shader = RadialGradient(
+        radius: 0.95,
+        colors: [
+          Colors.transparent,
+          const Color(0xFF9F8D72).withValues(alpha: 0.16),
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, vignette);
+
+    final speckPaint = Paint()..style = PaintingStyle.fill;
+    for (var i = 0; i < 170; i++) {
+      final x = (math.sin(i * 19.19) * 0.5 + 0.5) * size.width;
+      final y = (math.cos(i * 37.77) * 0.5 + 0.5) * size.height;
+      final opacity = 0.035 + (i % 5) * 0.014;
+      speckPaint.color = const Color(0xFF383028).withValues(alpha: opacity);
+      canvas.drawCircle(Offset(x, y), 0.45 + (i % 3) * 0.35, speckPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _PaperPainter oldDelegate) {
+    return false;
   }
 }
