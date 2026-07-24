@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tuner: Radiant Golden Star Concept</title>
+<!-- Tailwind CSS v3 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts for Orchestral/Classic Aesthetic -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<style data-purpose="custom-config">
+    :root {
+      --space-dark: #050a14;
+      --solar-gold: #ffb800;
+      --solar-core: #ffda6a;
+      --ivory: #fdfaf1;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--space-dark);
+      color: var(--ivory);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    .serif-text {
+      font-family: 'Playfair Display', serif;
+    }
+  </style>
+<style data-purpose="solar-physics-effects">
+    /* Hyper-realistic Solar Flare Container */
+    .solar-system {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* The Coronal Filaments background */
+    .coronal-filaments {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 500px;
+      background: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAJmBi2WvxSxdzd7vfAidG3_f7I_cc75JiN2Z3PtcEuQDCcCztps3wOv7aUJX5UFVTHvHBGmuqL69QJy6PjaazjfR-A9QmpSD8YGGf0ayAsS0rrvs8GEIO0RCh6TXJp_GNbjJ-hZyQyhhip2HSj-pDZvjKMFBocxag98GdKueGyAFxOUGg0qGR7m69K99x-7FNhDGxjTYzc_y8j3-JaKuqb4sPZjVjG-TMPWJ7fqQFt3c9vZNf0lYgPVGVJXStqI5pel5o3PLb0sQ');
+      background-size: cover;
+      background-position: center;
+      mix-blend-mode: screen;
+      opacity: 0.8;
+      filter: blur(2px) contrast(1.2);
+      animation: solar-pulse 8s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    /* Glowing Central Orb (The Sun) */
+    .sun-core {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, var(--solar-core) 0%, var(--solar-gold) 60%, transparent 100%);
+      border-radius: 50%;
+      box-shadow: 0 0 60px 20px rgba(255, 184, 0, 0.4),
+                  inset 0 0 40px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    @keyframes solar-pulse {
+      0% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+      100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.9; }
+    }
+
+    /* Glass Cards */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+    }
+
+    .progress-bar-bg {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ffb800, #ffda6a);
+      box-shadow: 0 0 8px #ffb800;
+    }
+  </style>
+</head>
+<body class="flex flex-col h-screen select-none">
+<!-- BEGIN: Header -->
+<header class="px-6 pt-6 pb-2 flex justify-between items-center z-50">
+<div class="flex items-center gap-2" data-purpose="logo-container">
+<svg fill="none" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 12C4 10 6 10 7 12C8 14 10 14 11 12C12 10 14 10 15 12C16 14 18 14 19 12" stroke="#63E6BE" stroke-linecap="round" stroke-width="2"></path>
+<path d="M4 8C4 6 6 6 7 8C8 10 10 10 11 8C12 6 14 6 15 8C16 10 18 10 19 8" opacity="0.6" stroke="#63E6BE" stroke-linecap="round" stroke-width="2"></path>
+<path d="M4 16C4 14 6 14 7 16C8 18 10 18 11 16C12 14 14 14 15 16C16 18 18 18 19 16" opacity="0.6" stroke="#63E6BE" stroke-linecap="round" stroke-width="2"></path>
+</svg>
+<span class="text-xl font-bold tracking-widest text-[#63E6BE] uppercase">Aeterna</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full flex items-center gap-2 text-[10px] tracking-widest uppercase font-semibold text-white/80">
+<span class="w-2 h-2 rounded-full bg-[#ffb800] shadow-[0_0_6px_#ffb800]"></span>
+        Brass Mode
+      </button>
+<button class="text-white/60">
+<svg fill="none" height="24" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+</button>
+</div>
+</header>
+<!-- END: Header -->
+<!-- BEGIN: Tuner Main Content -->
+<main class="flex-grow flex flex-col items-center justify-start pt-12 relative overflow-visible">
+<!-- Solar Feature Area -->
+<div class="solar-system mb-12">
+<!-- Hyper-realistic energy threads (Image 5 Backdrop) -->
+<div class="coronal-filaments"></div>
+<!-- The Central Orb -->
+<div class="sun-core" data-purpose="pitch-display-core">
+<span class="text-[10px] tracking-[0.2em] font-semibold text-black/60 uppercase mb-2">Current Pitch</span>
+<h1 class="serif-text text-8xl text-black leading-none tracking-tight">Bb<sub class="text-4xl -bottom-1">3</sub></h1>
+<div class="w-1/2 h-[1px] bg-black/20 my-6"></div>
+<span class="text-lg font-medium text-black/70 tabular-nums">233.08 Hz</span>
+</div>
+</div>
+<!-- Confidence Indicator -->
+<div class="flex flex-col items-center gap-4 z-20">
+<div class="flex gap-2" data-purpose="confidence-meter">
+<div class="w-3 h-3 rounded-full bg-white/10"></div>
+<div class="w-3 h-3 rounded-full bg-[#ffb800] shadow-[0_0_10px_#ffb800]"></div>
+<div class="w-3 h-3 rounded-full bg-[#ffb800] shadow-[0_0_10px_#ffb800]"></div>
+<div class="w-3 h-3 rounded-full bg-[#ffb800] shadow-[0_0_10px_#ffb800]"></div>
+<div class="w-3 h-3 rounded-full bg-[#ffb800] shadow-[0_0_10px_#ffb800]"></div>
+<div class="w-3 h-3 rounded-full bg-white/10"></div>
+<div class="w-3 h-3 rounded-full bg-white/10"></div>
+</div>
+<span class="text-[10px] tracking-[0.3em] font-bold text-[#ffb800] uppercase">Stable Pitch</span>
+</div>
+<!-- Details Grid -->
+<div class="w-full px-6 mt-12 grid grid-cols-2 gap-4 z-20">
+<!-- Temperament Card -->
+<div class="glass-card p-5 flex flex-col justify-between h-36" data-purpose="temperament-card">
+<div>
+<h3 class="text-[9px] tracking-widest text-white/40 uppercase mb-4 font-bold">Temperament</h3>
+<p class="serif-text text-2xl text-white/90">Equal</p>
+</div>
+<div class="progress-bar-bg w-full">
+<div class="progress-bar-fill w-[65%]"></div>
+</div>
+</div>
+<!-- Transposition Card -->
+<div class="glass-card p-5 flex flex-col justify-between h-36" data-purpose="transposition-card">
+<div>
+<h3 class="text-[9px] tracking-widest text-white/40 uppercase mb-4 font-bold">Transposition</h3>
+<p class="serif-text text-2xl text-white/90">Bb</p>
+</div>
+<button class="flex items-center gap-1.5 text-[9px] tracking-wider text-[#ffb800] uppercase font-bold text-left">
+          Change
+          <svg fill="none" height="10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" viewbox="0 0 24 24" width="10" xmlns="http://www.w3.org/2000/svg"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+</button>
+</div>
+</div>
+<!-- Waveform Analysis Section -->
+<div class="w-full px-6 mt-4 z-20">
+<div class="glass-card p-4 flex items-center gap-4" data-purpose="waveform-button">
+<div class="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+<svg fill="none" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#ffb800" height="4" rx="1" width="2" x="5" y="10"></rect>
+<rect fill="#ffb800" height="10" rx="1" width="2" x="9" y="7"></rect>
+<rect fill="#ffb800" height="16" rx="1" width="2" x="13" y="4"></rect>
+<rect fill="#ffb800" height="6" rx="1" width="2" x="17" y="9"></rect>
+</svg>
+</div>
+<div class="flex-grow">
+<h4 class="text-sm font-semibold text-white/90 leading-tight">Waveform Analysis</h4>
+<span class="text-[10px] tracking-widest text-white/30 uppercase font-bold">Detailed Harmonics</span>
+</div>
+<svg class="opacity-40" fill="none" height="18" stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18" xmlns="http://www.w3.org/2000/svg"><path d="m9 18 6-6-6-6"></path></svg>
+</div>
+</div>
+</main>
+<!-- END: Tuner Main Content -->
+<!-- BEGIN: Bottom Navigation -->
+<footer class="bg-black/80 backdrop-blur-md border-t border-white/5 pb-8 pt-4 px-10 flex justify-between items-center z-50">
+<div class="flex flex-col items-center gap-1 group" data-purpose="nav-item">
+<svg fill="none" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 12V12C4 10.3431 5.34315 9 7 9V9C8.65685 9 10 10.3431 10 12V12C10 13.6569 8.65685 15 7 15V15C5.34315 15 4 13.6569 4 12V12Z" stroke="#63E6BE" stroke-width="2"></path>
+<path d="M14 12V12C14 8.68629 16.6863 6 20 6V6" stroke="#63E6BE" stroke-linecap="round" stroke-width="2"></path>
+<path d="M14 12V12C14 15.3137 16.6863 18 20 18V18" stroke="#63E6BE" stroke-linecap="round" stroke-width="2"></path>
+<line stroke="#63E6BE" stroke-linecap="round" stroke-width="2" x1="14" x2="14" y1="6" y2="18"></line>
+</svg>
+<span class="text-[10px] text-[#63E6BE] font-medium">Tuner</span>
+<div class="w-1 h-1 rounded-full bg-[#63E6BE]"></div>
+</div>
+<div class="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity cursor-pointer" data-purpose="nav-item">
+<svg fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="22" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+<span class="text-[10px] font-medium">History</span>
+</div>
+<div class="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity cursor-pointer" data-purpose="nav-item">
+<div class="w-[22px] h-[22px] border-2 border-current rounded flex items-center justify-center text-[8px] font-black">4K</div>
+<span class="text-[10px] font-medium">Presets</span>
+</div>
+</footer>
+<!-- END: Bottom Navigation -->
+</body></html>

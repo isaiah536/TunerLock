@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Azure Storm Tuner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#93000a",
+                        "surface-container": "#171f33",
+                        "secondary-container": "#ee9800",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "outline-variant": "#3c4a42",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "surface-container-high": "#222a3d",
+                        "tertiary-fixed-dim": "#c0c1ff",
+                        "primary-fixed": "#6ffbbe",
+                        "primary-container": "#10b981",
+                        "on-tertiary-fixed": "#07006c",
+                        "tertiary-container": "#9699ff",
+                        "surface-container-low": "#131b2e",
+                        "surface": "#0b1326",
+                        "on-tertiary-container": "#1d17b2",
+                        "tertiary": "#c0c1ff",
+                        "on-secondary": "#472a00",
+                        "tertiary-fixed": "#e1e0ff",
+                        "surface-container-highest": "#2d3449",
+                        "on-surface-variant": "#bbcabf",
+                        "surface-container-lowest": "#060e20",
+                        "primary-fixed-dim": "#4edea3",
+                        "on-tertiary-fixed-variant": "#2f2ebe",
+                        "on-surface": "#dae2fd",
+                        "on-primary-fixed-variant": "#005236",
+                        "on-primary-fixed": "#002113",
+                        "on-primary-container": "#00422b",
+                        "primary": "#4edea3",
+                        "on-error-container": "#ffdad6",
+                        "inverse-primary": "#006c49",
+                        "secondary": "#ffb95f",
+                        "inverse-surface": "#dae2fd",
+                        "background": "#0b1326",
+                        "surface-dim": "#0b1326",
+                        "on-secondary-container": "#5b3800",
+                        "outline": "#86948a",
+                        "on-primary": "#003824",
+                        "on-background": "#dae2fd",
+                        "surface-variant": "#2d3449",
+                        "secondary-fixed": "#ffddb8",
+                        "inverse-on-surface": "#283044",
+                        "surface-tint": "#4edea3",
+                        "error": "#ffb4ab",
+                        "surface-bright": "#31394d",
+                        "on-tertiary": "#1000a9",
+                        "on-secondary-fixed": "#2a1700",
+                        "on-error": "#690005",
+                        "ivory": "#FDFBF7",
+                        "azure-glow": "#00E5FF",
+                        "storm-deep": "#081B33"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap": "16px",
+                        "container-padding": "24px",
+                        "glass-padding": "20px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "mono-data": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Playfair Display"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Playfair Display"]
+                    },
+                    "fontSize": {
+                        "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-md": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            overflow-x: hidden;
+            height: 100vh;
+        }
+
+        .glass-card {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.05);
+        }
+
+        .azure-glow-effect {
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.3), inset 0 0 20px rgba(0, 229, 255, 0.2);
+        }
+
+        .event-horizon {
+            background: radial-gradient(circle at center, transparent 40%, rgba(0, 229, 255, 0.4) 65%, rgba(0, 229, 255, 0.8) 70%, transparent 75%);
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        .gas-giant-orb {
+            background: radial-gradient(circle at 30% 30%, #171f33, #0b1326);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .storm-swirl {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 229, 255, 0.1), transparent 40%);
+            animation: rotate-storm 20s linear infinite;
+        }
+
+        @keyframes rotate-storm {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .confidence-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(0, 229, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .confidence-dot.active {
+            background: #00E5FF;
+            box-shadow: 0 0 10px #00E5FF;
+        }
+
+        .pitch-label {
+            color: #FDFBF7;
+            text-shadow: 0 0 10px rgba(253, 251, 247, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="flex flex-col font-body-md text-on-surface">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center px-container-padding py-4 w-full z-50 backdrop-blur-xl bg-surface/10 border-b border-white/10 fixed top-0 pt-safe">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary hover:bg-white/10 transition-colors p-2 rounded-full cursor-pointer">menu</span>
+<h1 class="font-headline-sm text-headline-sm text-primary tracking-widest uppercase">Azure Storm Tuner</h1>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary hover:bg-white/10 transition-colors p-2 rounded-full cursor-pointer">settings</span>
+</div>
+</header>
+<main class="flex-grow flex flex-col items-center justify-center pt-24 pb-32 px-container-padding">
+<!-- Main Tuner Visualizer -->
+<div class="relative w-full max-w-2xl aspect-square flex items-center justify-center">
+<!-- Atmospheric Shader Background (The Storm) -->
+<div class="absolute inset-0 opacity-40">
+
+</div>
+<!-- Event Horizon Glow Rings -->
+<div class="absolute w-[85%] h-[85%] rounded-full event-horizon"></div>
+<div class="absolute w-[75%] h-[75%] rounded-full event-horizon" style="animation-delay: -2s;"></div>
+<!-- Central Gas Giant Orb -->
+<div class="relative w-[60%] h-[60%] rounded-full gas-giant-orb azure-glow-effect flex flex-col items-center justify-center z-10">
+<div class="storm-swirl"></div>
+<!-- Central Pitch Display -->
+<div class="z-20 text-center">
+<span class="font-display-lg text-[120px] pitch-label leading-none">A</span>
+<div class="flex items-center justify-center gap-1 mt-[-10px]">
+<span class="font-headline-sm text-primary">#</span>
+<span class="font-headline-sm text-ivory/80">4</span>
+</div>
+</div>
+<!-- Needle / Fluid Pitch Indicator -->
+<div class="absolute inset-0 z-30 pointer-events-none transition-transform duration-300" id="pitch-needle" style="transform: rotate(2deg);">
+<div class="absolute top-4 left-1/2 -translate-x-1/2 w-1 h-12 bg-primary rounded-full blur-[2px] shadow-[0_0_15px_#4edea3]"></div>
+</div>
+</div>
+<!-- Frequency Labels (Arc) -->
+<div class="absolute inset-0 pointer-events-none">
+<div class="absolute top-[10%] left-1/2 -translate-x-1/2 font-label-caps text-label-caps text-ivory/40">440.0 Hz</div>
+<div class="absolute bottom-[10%] left-1/2 -translate-x-1/2 font-label-caps text-label-caps text-primary">IN TUNE</div>
+</div>
+</div>
+<!-- Centering Information Bento -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-stack-gap w-full max-w-4xl mt-12">
+<!-- Tuning Preset Card -->
+<div class="glass-card rounded-xl p-glass-padding flex flex-col justify-between min-h-[140px]">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Current Instrument</span>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">piano</span>
+<span class="font-headline-sm text-headline-sm text-ivory">Grand Piano</span>
+</div>
+<span class="font-body-md text-primary/70">Equal Temperament</span>
+</div>
+<!-- Waveform / Spectrum Card -->
+<div class="glass-card rounded-xl p-glass-padding md:col-span-2 overflow-hidden relative min-h-[140px]">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Harmonic Resonance</span>
+<span class="font-mono-data text-mono-data text-primary">+0.3 cts</span>
+</div>
+<div class="h-16 w-full flex items-end gap-1 px-2">
+<!-- Simulated Waveform -->
+<div class="flex-grow bg-primary/20 h-2 rounded-t-sm" style="height: 40%"></div>
+<div class="flex-grow bg-primary/30 h-4 rounded-t-sm" style="height: 60%"></div>
+<div class="flex-grow bg-primary/50 h-8 rounded-t-sm" style="height: 90%"></div>
+<div class="flex-grow bg-primary h-12 rounded-t-sm" style="height: 100%"></div>
+<div class="flex-grow bg-primary/50 h-8 rounded-t-sm" style="height: 85%"></div>
+<div class="flex-grow bg-primary/30 h-4 rounded-t-sm" style="height: 55%"></div>
+<div class="flex-grow bg-primary/20 h-2 rounded-t-sm" style="height: 35%"></div>
+</div>
+</div>
+</div>
+<!-- Confidence Indicator (Bottom Right) -->
+<div class="fixed bottom-28 right-container-padding flex flex-col items-end gap-2 z-40">
+<span class="font-label-caps text-[10px] text-on-surface-variant/60 tracking-widest uppercase">Signal Stability</span>
+<div class="flex gap-1.5">
+<div class="confidence-dot active"></div>
+<div class="confidence-dot active"></div>
+<div class="confidence-dot active"></div>
+<div class="confidence-dot active"></div>
+<div class="confidence-dot active"></div>
+<div class="confidence-dot active"></div>
+<div class="confidence-dot"></div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-6 left-0 right-0 z-50 flex justify-around items-center px-4 py-3 pb-safe backdrop-blur-glass bg-white/10 border border-white/15 rounded-t-xl mb-4 mx-container-padding w-[calc(100%-48px)] shadow-lg shadow-surface-container-lowest/40">
+<a class="flex flex-col items-center justify-center text-primary drop-shadow-[0_0_8px_rgba(78,222,163,0.6)] group" href="#">
+<span class="material-symbols-outlined transition-all group-active:scale-90 duration-300">graphic_eq</span>
+<span class="font-label-caps text-label-caps">Tuner</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary/80 transition-all group" href="#">
+<span class="material-symbols-outlined transition-all group-active:scale-90 duration-300">history</span>
+<span class="font-label-caps text-label-caps">History</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary/80 transition-all group" href="#">
+<span class="material-symbols-outlined transition-all group-active:scale-90 duration-300">library_music</span>
+<span class="font-label-caps text-label-caps">Presets</span>
+</a>
+</nav>
+<!-- Background Decoration -->
+<div class="fixed inset-0 pointer-events-none -z-10 bg-background overflow-hidden">
+<div class="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-tertiary/5 blur-[100px] rounded-full"></div>
+</div>
+<script>
+        // Micro-interaction for the tuner needle
+        const needle = document.getElementById('pitch-needle');
+        let currentRotation = 2;
+        
+        setInterval(() => {
+            // Random jitter to simulate real-time pitch detection
+            const jitter = (Math.random() - 0.5) * 1.5;
+            currentRotation = 2 + jitter;
+            needle.style.transform = `rotate(${currentRotation}deg)`;
+        }, 150);
+
+        // Simple haptic-like interaction on glass cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousedown', () => {
+                card.style.transform = 'scale(0.98)';
+                card.style.transition = 'transform 0.1s ease-out';
+            });
+            card.addEventListener('mouseup', () => {
+                card.style.transform = 'scale(1)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body></html>

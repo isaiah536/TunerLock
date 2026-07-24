@@ -3,6 +3,7 @@ import 'dart:io';
 import 'microphone_input_service.dart';
 import 'mock_microphone_input_service.dart';
 import 'native_microphone_input_service.dart';
+import 'silent_microphone_input_service.dart';
 import 'wav_file_input_service.dart';
 
 class MicrophoneInputFactory {
@@ -17,16 +18,13 @@ class MicrophoneInputFactory {
       return MockMicrophoneInputService();
     }
 
-    final shouldUseWavInput =
-        useWavInput ?? !(Platform.isIOS || Platform.isAndroid);
+    final shouldUseWavInput = useWavInput ?? false;
     if (shouldUseWavInput) {
       final resolvedPath = _resolveWavPath(wavPath);
       if (resolvedPath != null) {
         return WavFileInputService(filePath: resolvedPath);
       }
-      if (useWavInput == true) {
-        return MockMicrophoneInputService();
-      }
+      return const SilentMicrophoneInputService();
     }
 
     if (Platform.isIOS || Platform.isAndroid) {
@@ -38,11 +36,7 @@ class MicrophoneInputFactory {
       return WavFileInputService(filePath: resolvedPath);
     }
 
-    if (useWavInput != false) {
-      return MockMicrophoneInputService();
-    }
-
-    return NativeMicrophoneInputService();
+    return const SilentMicrophoneInputService();
   }
 
   static String? _resolveWavPath(String? requestedPath) {
@@ -53,22 +47,6 @@ class MicrophoneInputFactory {
       return File(explicitPath).absolute.path;
     }
 
-    var directory = Directory.current.absolute;
-    for (var depth = 0; depth < 8; depth++) {
-      final candidate = File(
-        '${directory.path}${Platform.pathSeparator}'
-        'datasets${Platform.pathSeparator}violin${Platform.pathSeparator}'
-        'violin_e.wav',
-      );
-      if (candidate.existsSync()) {
-        return candidate.path;
-      }
-      final parent = directory.parent;
-      if (parent.path == directory.path) {
-        break;
-      }
-      directory = parent;
-    }
     return null;
   }
 }

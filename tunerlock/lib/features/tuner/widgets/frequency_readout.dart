@@ -10,6 +10,8 @@ class FrequencyReadout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasFrequency = reading.currentFrequency > 0;
+
     return Column(
       children: [
         Row(
@@ -18,7 +20,9 @@ class FrequencyReadout extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              PitchFormatters.frequency(reading.currentFrequency),
+              hasFrequency
+                  ? PitchFormatters.frequency(reading.currentFrequency)
+                  : '',
               style: const TextStyle(
                 fontSize: 78,
                 height: 0.95,
@@ -35,9 +39,9 @@ class FrequencyReadout extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'Hz',
-              style: TextStyle(
+            Text(
+              hasFrequency ? 'Hz' : '',
+              style: const TextStyle(
                 fontSize: 35,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF4B4841),
@@ -46,9 +50,9 @@ class FrequencyReadout extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        const Text(
-          'Auralock',
-          style: TextStyle(
+        Text(
+          hasFrequency ? 'Auralock' : '',
+          style: const TextStyle(
             fontSize: 34,
             height: 1,
             fontWeight: FontWeight.w400,
@@ -57,7 +61,9 @@ class FrequencyReadout extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          reading.isLocked ? 'Locked' : 'Listening',
+          hasFrequency
+              ? (reading.isLocked ? 'Locked' : 'Listening')
+              : 'Listening',
           style: const TextStyle(
             fontSize: 33,
             height: 1,

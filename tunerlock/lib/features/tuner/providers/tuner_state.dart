@@ -5,10 +5,10 @@ class TunerState {
   const TunerState._();
 
   static const TunerReading previewReading = TunerReading(
-    note: TunerConstants.referenceNote,
+    note: '--',
     referenceFrequency: TunerConstants.referenceFrequency,
-    currentFrequency: TunerConstants.displayedFrequency,
-    isLocked: true,
-    confidence: 0.96,
+    currentFrequency: 0,
+    isLocked: false,
+    confidence: 0,
   );
 }

@@ -1,11 +1,11 @@
 import 'audio/audio_pcm_frame.dart';
 import 'tracking_engine_bridge_stub.dart'
-    if (dart.library.ffi) 'tracking_engine_bridge_native.dart' as implementation;
+    if (dart.library.ffi) 'tracking_engine_bridge_native.dart'
+    as implementation;
 
-enum TrackingMode {
-  tuning,
-  performance,
-}
+enum TrackingMode { tuning, performance }
+
+enum InstrumentProfile { strings, wind, brass }
 
 class TrackingEngineReading {
   const TrackingEngineReading({
@@ -28,6 +28,7 @@ class TrackingEngineReading {
 abstract interface class TrackingEngineBridge {
   TrackingEngineReading? process(AudioPcmFrame frame);
   void setReferencePitch(double frequencyHz);
+  void setInstrumentProfile(InstrumentProfile profile);
   void setTrackingMode(TrackingMode mode);
   void dispose();
 }

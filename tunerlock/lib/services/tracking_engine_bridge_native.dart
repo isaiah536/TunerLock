@@ -17,8 +17,7 @@ typedef _FreeNative = Void Function(Pointer<Float>);
 typedef _FreeDart = void Function(Pointer<Float>);
 typedef _ProcessNative =
     Int32 Function(Pointer<Void>, Pointer<Float>, Int32, Int32);
-typedef _ProcessDart =
-    int Function(Pointer<Void>, Pointer<Float>, int, int);
+typedef _ProcessDart = int Function(Pointer<Void>, Pointer<Float>, int, int);
 typedef _FrequencyNative = Double Function(Pointer<Void>);
 typedef _FrequencyDart = double Function(Pointer<Void>);
 typedef _IntegerResultNative = Int32 Function(Pointer<Void>);
@@ -34,56 +33,58 @@ TrackingEngineBridge? createTrackingEngineBridge() {
 
 final class _NativeTrackingEngineBridge implements TrackingEngineBridge {
   _NativeTrackingEngineBridge(DynamicLibrary library)
-      : _destroy = library
-            .lookupFunction<_DestroyNative, _DestroyDart>(
-              'tunerlock_engine_destroy',
-            ),
-        _setReference = library
-            .lookupFunction<_SetReferenceNative, _SetReferenceDart>(
-              'tunerlock_engine_set_reference_pitch',
-            ),
-        _setMode = library.lookupFunction<_SetModeNative, _SetModeDart>(
-          'tunerlock_engine_set_tracking_mode',
-        ),
-        _allocate = library.lookupFunction<_AllocateNative, _AllocateDart>(
-          'tunerlock_samples_allocate',
-        ),
-        _free = library.lookupFunction<_FreeNative, _FreeDart>(
-          'tunerlock_samples_free',
-        ),
-        _process = library.lookupFunction<_ProcessNative, _ProcessDart>(
-          'tunerlock_engine_process',
-        ),
-        _frequency = library.lookupFunction<_FrequencyNative, _FrequencyDart>(
-          'tunerlock_engine_frequency_hz',
-        ),
-        _targetFrequency =
-            library.lookupFunction<_FrequencyNative, _FrequencyDart>(
-              'tunerlock_engine_target_frequency_hz',
-            ),
-        _cents = library.lookupFunction<_FrequencyNative, _FrequencyDart>(
-          'tunerlock_engine_cents',
-        ),
-        _confidence = library.lookupFunction<_FrequencyNative, _FrequencyDart>(
-          'tunerlock_engine_confidence',
-        ),
-        _midiNote =
-            library.lookupFunction<_IntegerResultNative, _IntegerResultDart>(
-              'tunerlock_engine_midi_note',
-            ),
-        _locked =
-            library.lookupFunction<_IntegerResultNative, _IntegerResultDart>(
-              'tunerlock_engine_locked',
-            ),
-        _handle = library.lookupFunction<_CreateNative, _CreateDart>(
-          'tunerlock_engine_create',
-        )(0) {
+    : _create = library.lookupFunction<_CreateNative, _CreateDart>(
+        'tunerlock_engine_create',
+      ),
+      _destroy = library.lookupFunction<_DestroyNative, _DestroyDart>(
+        'tunerlock_engine_destroy',
+      ),
+      _setReference = library
+          .lookupFunction<_SetReferenceNative, _SetReferenceDart>(
+            'tunerlock_engine_set_reference_pitch',
+          ),
+      _setMode = library.lookupFunction<_SetModeNative, _SetModeDart>(
+        'tunerlock_engine_set_tracking_mode',
+      ),
+      _allocate = library.lookupFunction<_AllocateNative, _AllocateDart>(
+        'tunerlock_samples_allocate',
+      ),
+      _free = library.lookupFunction<_FreeNative, _FreeDart>(
+        'tunerlock_samples_free',
+      ),
+      _process = library.lookupFunction<_ProcessNative, _ProcessDart>(
+        'tunerlock_engine_process',
+      ),
+      _frequency = library.lookupFunction<_FrequencyNative, _FrequencyDart>(
+        'tunerlock_engine_frequency_hz',
+      ),
+      _targetFrequency = library
+          .lookupFunction<_FrequencyNative, _FrequencyDart>(
+            'tunerlock_engine_target_frequency_hz',
+          ),
+      _cents = library.lookupFunction<_FrequencyNative, _FrequencyDart>(
+        'tunerlock_engine_cents',
+      ),
+      _confidence = library.lookupFunction<_FrequencyNative, _FrequencyDart>(
+        'tunerlock_engine_confidence',
+      ),
+      _midiNote = library
+          .lookupFunction<_IntegerResultNative, _IntegerResultDart>(
+            'tunerlock_engine_midi_note',
+          ),
+      _locked = library
+          .lookupFunction<_IntegerResultNative, _IntegerResultDart>(
+            'tunerlock_engine_locked',
+          ) {
+    _handle = _create(_profile.index);
     if (_handle == nullptr) {
       throw StateError('Tracking engine could not be created.');
     }
+    _setMode(_handle, _mode.index);
   }
 
-  final Pointer<Void> _handle;
+  Pointer<Void> _handle = nullptr;
+  final _CreateDart _create;
   final _DestroyDart _destroy;
   final _SetReferenceDart _setReference;
   final _SetModeDart _setMode;
@@ -96,6 +97,9 @@ final class _NativeTrackingEngineBridge implements TrackingEngineBridge {
   final _FrequencyDart _confidence;
   final _IntegerResultDart _midiNote;
   final _IntegerResultDart _locked;
+  InstrumentProfile _profile = InstrumentProfile.strings;
+  TrackingMode _mode = TrackingMode.tuning;
+  double _referencePitchHz = 440.0;
   bool _disposed = false;
 
   @override
@@ -136,13 +140,32 @@ final class _NativeTrackingEngineBridge implements TrackingEngineBridge {
   @override
   void setReferencePitch(double frequencyHz) {
     if (!_disposed && frequencyHz > 0) {
+      _referencePitchHz = frequencyHz;
       _setReference(_handle, frequencyHz);
     }
   }
 
   @override
+  void setInstrumentProfile(InstrumentProfile profile) {
+    if (_disposed || profile == _profile) {
+      return;
+    }
+
+    _destroy(_handle);
+    _profile = profile;
+    _handle = _create(_profile.index);
+    if (_handle == nullptr) {
+      _disposed = true;
+      throw StateError('Tracking engine could not be recreated.');
+    }
+    _setReference(_handle, _referencePitchHz);
+    _setMode(_handle, _mode.index);
+  }
+
+  @override
   void setTrackingMode(TrackingMode mode) {
     if (!_disposed) {
+      _mode = mode;
       _setMode(_handle, mode.index);
     }
   }

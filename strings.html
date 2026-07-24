@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Singularity Tuner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed": "#6ffbbe",
+                    "on-secondary": "#472a00",
+                    "on-tertiary-fixed": "#07006c",
+                    "outline": "#86948a",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "surface-container-low": "#131b2e",
+                    "on-primary": "#003824",
+                    "surface-container-lowest": "#060e20",
+                    "surface-container-highest": "#2d3449",
+                    "on-tertiary-fixed-variant": "#2f2ebe",
+                    "secondary-container": "#ee9800",
+                    "secondary-fixed": "#ffddb8",
+                    "error-container": "#93000a",
+                    "surface-bright": "#31394d",
+                    "surface-container-high": "#222a3d",
+                    "inverse-on-surface": "#283044",
+                    "secondary": "#ffb95f",
+                    "surface-container": "#171f33",
+                    "on-primary-fixed-variant": "#005236",
+                    "on-surface-variant": "#bbcabf",
+                    "on-background": "#dae2fd",
+                    "tertiary-container": "#9699ff",
+                    "on-secondary-fixed": "#2a1700",
+                    "tertiary-fixed-dim": "#c0c1ff",
+                    "primary-fixed-dim": "#4edea3",
+                    "outline-variant": "#3c4a42",
+                    "on-secondary-container": "#5b3800",
+                    "tertiary": "#c0c1ff",
+                    "primary": "#4edea3",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "on-error-container": "#ffdad6",
+                    "on-tertiary-container": "#1d17b2",
+                    "surface-variant": "#2d3449",
+                    "surface-tint": "#4edea3",
+                    "on-surface": "#dae2fd",
+                    "on-error": "#690005",
+                    "tertiary-fixed": "#e1e0ff",
+                    "primary-container": "#10b981",
+                    "on-primary-container": "#00422b",
+                    "inverse-primary": "#006c49",
+                    "inverse-surface": "#dae2fd",
+                    "surface": "#0b1326",
+                    "background": "#0b1326",
+                    "error": "#ffb4ab",
+                    "surface-dim": "#0b1326",
+                    "on-tertiary": "#1000a9",
+                    "on-primary-fixed": "#002113"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-gap": "16px",
+                    "glass-padding": "20px",
+                    "container-padding": "24px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "display-lg": ["Playfair Display"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "headline-md": ["Playfair Display"],
+                    "mono-data": ["Inter"],
+                    "headline-sm": ["Playfair Display"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "mono-data": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-sm": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0b1326;
+            margin: 0;
+            overflow: hidden;
+            color: #dae2fd;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .singularity-container {
+            perspective: 1000px;
+        }
+        .liquid-disk {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotateX(65deg);
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            border: 8px solid #10b981;
+            box-shadow: 0 0 40px #10b981, inset 0 0 40px #10b981;
+            filter: blur(1px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .liquid-disk::before {
+            content: '';
+            position: absolute;
+            inset: -15px;
+            border-radius: 50%;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            animation: ripple 4s infinite linear;
+        }
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+        .event-horizon-glow {
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%);
+        }
+        .note-display {
+            text-shadow: 0 0 20px rgba(78, 222, 163, 0.5);
+        }
+        .wobble {
+            animation: wobble-anim 0.5s ease-in-out infinite alternate;
+        }
+        @keyframes wobble-anim {
+            from { border-radius: 45% 55% 50% 50% / 50% 50% 55% 45%; }
+            to { border-radius: 55% 45% 50% 50% / 50% 50% 45% 55%; }
+        }
+        .glow-pulse {
+            animation: pulse-glow 2s infinite alternate;
+        }
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 30px #10b981; }
+            to { box-shadow: 0 0 60px #10b981, 0 0 100px rgba(16, 185, 129, 0.4); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-body-md text-body-md overflow-hidden h-screen flex flex-col bg-surface">
+<!-- Cosmic Background Shaders/Animation -->
+<div class="fixed inset-0 pointer-events-none z-0">
+
+</div>
+<!-- Top App Bar -->
+<header class="w-full top-0 sticky backdrop-blur-md border-b border-white/10 flex justify-between items-center px-6 py-4 w-full z-50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="settings_input_antenna">settings_input_antenna</span>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">Harmonic Glass</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:opacity-80 transition-all cursor-pointer" data-icon="tune">tune</span>
+<span class="material-symbols-outlined text-primary" data-icon="battery_horiz_075">battery_horiz_075</span>
+</div>
+</header>
+<main class="flex-1 relative z-10 flex flex-col items-center justify-center container-padding pb-32">
+<!-- Main Tuner UI -->
+<div class="w-full max-w-md flex flex-col items-center gap-stack-gap h-full justify-between py-12">
+<!-- Header/Status -->
+<div class="text-center">
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1 uppercase tracking-widest">Acoustic Guitar</p>
+<h2 class="font-headline-md text-headline-md text-on-background">Singularity Tuner</h2>
+</div>
+<!-- The Singularity Visualizer -->
+<div class="relative w-full aspect-square flex items-center justify-center singularity-container">
+<!-- Outer Glow -->
+<div class="absolute w-80 h-80 rounded-full event-horizon-glow"></div>
+<!-- The Liquid Accretion Disk -->
+<div class="liquid-disk wobble" id="accretion-disk"></div>
+<!-- The Black Hole Center / Note Display -->
+<div class="relative z-20 w-48 h-48 rounded-full bg-surface border border-white/5 flex flex-col items-center justify-center shadow-[inset_0_0_50px_rgba(0,0,0,1)]">
+<span class="font-display-lg text-display-lg text-primary note-display" id="note-text">E2</span>
+<div class="flex flex-col items-center">
+<span class="font-mono-data text-mono-data text-on-surface-variant mt-2" id="cents-text">-12 Cents</span>
+</div>
+</div>
+</div>
+<!-- Frequency and Stats -->
+<div class="w-full flex justify-between items-center px-8">
+<div class="text-center">
+<p class="font-label-caps text-label-caps text-on-surface-variant">FREQUENCY</p>
+<p class="font-headline-sm text-headline-sm text-on-background" id="freq-text">82.41<span class="text-label-caps text-on-surface-variant ml-1">Hz</span></p>
+</div>
+<div class="text-center">
+<p class="font-label-caps text-label-caps text-on-surface-variant">CONFIDENCE</p>
+<div class="flex gap-1 mt-2">
+<div class="w-1.5 h-4 bg-primary rounded-full"></div>
+<div class="w-1.5 h-4 bg-primary rounded-full"></div>
+<div class="w-1.5 h-4 bg-primary rounded-full"></div>
+<div class="w-1.5 h-4 bg-primary/30 rounded-full"></div>
+<div class="w-1.5 h-4 bg-primary/30 rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Event Horizon Deviation Slider -->
+<div class="w-full space-y-4 px-4">
+<div class="relative h-12 w-full glass-card rounded-full flex items-center overflow-hidden">
+<!-- Central Marker -->
+<div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-primary/40 -translate-x-1/2 z-0"></div>
+<!-- Glow Slider -->
+<div class="absolute left-1/4 w-8 h-8 rounded-full bg-primary shadow-[0_0_20px_#4edea3] z-10 transition-all duration-300" id="deviation-marker"></div>
+<!-- Labels -->
+<div class="absolute inset-0 flex justify-between items-center px-6 pointer-events-none">
+<span class="font-label-caps text-label-caps text-on-surface-variant/40">-50</span>
+<span class="font-label-caps text-label-caps text-primary/80">0</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant/40">+50</span>
+</div>
+</div>
+<p class="text-center font-label-caps text-label-caps text-on-surface-variant/60">EVENT HORIZON DEVIATION</p>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 backdrop-blur-[20px] bg-white/10 border-t border-white/15 shadow-[0_-4px_20px_rgba(2,6,23,0.4)] flex justify-around items-center h-20 px-glass-padding pb-safe">
+<a class="flex flex-col items-center justify-center text-primary drop-shadow-[0_0_8px_rgba(16,185,129,0.6)] transition-transform scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+<span class="font-label-caps text-label-caps">Tuner</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary/80 transition-transform scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-caps text-label-caps">History</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary/80 transition-transform scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="piano">piano</span>
+<span class="font-label-caps text-label-caps">Presets</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/70 hover:text-primary/80 transition-transform scale-95 active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+</nav>
+<script>
+        // Simulation Script for the Pitch Interaction
+        const disk = document.getElementById('accretion-disk');
+        const marker = document.getElementById('deviation-marker');
+        const centsText = document.getElementById('cents-text');
+        const noteText = document.getElementById('note-text');
+        const freqText = document.getElementById('freq-text');
+        
+        let currentDev = -12;
+        let direction = 1;
+
+        function updateUI() {
+            // Update Cents
+            currentDev += (direction * 0.5);
+            if (currentDev > 5) direction = -1;
+            if (currentDev < -15) direction = 1;
+
+            const displayDev = Math.round(currentDev);
+            const isClose = Math.abs(displayDev) < 3;
+
+            // Visual feedback on the disk
+            if (isClose) {
+                disk.classList.remove('wobble');
+                disk.classList.add('glow-pulse');
+                disk.style.borderColor = '#10b981';
+                disk.style.boxShadow = '0 0 60px #10b981, inset 0 0 60px #10b981';
+                centsText.textContent = 'Perfect Pitch';
+                centsText.className = 'font-mono-data text-mono-data text-primary mt-2 uppercase';
+            } else {
+                disk.classList.add('wobble');
+                disk.classList.remove('glow-pulse');
+                disk.style.borderColor = displayDev < 0 ? '#ffb4ab' : '#ffb95f';
+                disk.style.boxShadow = `0 0 30px ${displayDev < 0 ? '#ffb4ab' : '#ffb95f'}`;
+                centsText.textContent = `${displayDev > 0 ? '+' : ''}${displayDev} Cents`;
+                centsText.className = 'font-mono-data text-mono-data text-on-surface-variant mt-2';
+            }
+
+            // Update Deviation Slider
+            // -50 to 50 maps to 0% to 100%
+            const percentage = ((currentDev + 50) / 100) * 80 + 10; // offset for marker width
+            marker.style.left = `${percentage}%`;
+            marker.style.backgroundColor = isClose ? '#4edea3' : (displayDev < 0 ? '#ffb4ab' : '#ffb95f');
+
+            // Subtle freq jitter
+            const baseFreq = 82.41;
+            const jitter = (Math.random() * 0.05 - 0.025);
+            freqText.innerHTML = `${(baseFreq + jitter).toFixed(2)}<span class="text-label-caps text-on-surface-variant ml-1">Hz</span>`;
+
+            requestAnimationFrame(() => {
+                setTimeout(updateUI, 100);
+            });
+        }
+
+        // Start simulation
+        setTimeout(updateUI, 1000);
+    </script>
+</body></html>
